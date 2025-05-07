@@ -29,6 +29,15 @@ CREATE TABLE UserInfo(
     UAddress INT FOREIGN KEY REFERENCES UserAddress(AddressID) 
 );
 
+CREATE TABLE UserContact(
+	UserContactID INT PRIMARY KEY IDENTITY(1,1),
+	UName Varchar(255) NOT NULL,
+	Email Varchar(255) NOT NULL,
+	Phone Varchar(15) NOT NULL,
+	UMessage Varchar(255) NOT NULL,
+	Seen bit DEFAULT 0
+);
+
 CREATE TABLE Airports(
 	AirportID INT PRIMARY KEY IDENTITY(1,1),
 	Country VARCHAR(255) NOT NULL,
@@ -125,6 +134,12 @@ VALUES
 (3, '4444444444', '5555555555', 3),
 (4, '6666666666', NULL, 4),
 (5, '7777777777', '8888888888', 5);
+
+--UserContact
+INSERT INTO UserContact (UName, Email, Phone, UMessage)
+VALUES ('Ammar', 'ammar@gmail.com', '03123456789', 'Hi I would like to meet you for business opportunities');
+
+SELECT * FROM UserContact;
 
 -- FLIGHTS
 INSERT INTO Flights (FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, DelayedTime, DelayedStatus, Price)
