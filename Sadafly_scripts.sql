@@ -150,6 +150,8 @@ VALUES
 ('FL004', 2, 1, '2025-06-13 15:00', '2025-06-13 19:00', NULL, 0, 260.00),
 ('FL005', 1, 2, '2025-06-14 10:00', '2025-06-14 14:00', NULL, 0, 280.00);
 
+Select * from Airports WHERE AirportID = 1;Select * from Airports WHERE AirportID = 2;
+
 -- FLIGHTCLASSES
 INSERT INTO FlightClasses (ClassName, FlightID)
 VALUES 
