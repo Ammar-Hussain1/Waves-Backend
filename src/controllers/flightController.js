@@ -32,11 +32,11 @@ export const createFlight = async (req, res) => {
         const pool = await poolPromise;
 
         await pool.request()
-            .input('FlightNumber', sql.Int, FlightNumber)
+            .input('FlightNumber', sql.NVarChar, FlightNumber)
             .input('DepartureAirport', sql.Int, DepartureAirport)
             .input('ArrivalAirport', sql.Int, ArrivalAirport)
-            .input('DepartureTime', sql.NVarChar, DepartureTime)
-            .input('ArrivalTime', sql.NVarChar, ArrivalTime)
+            .input('DepartureTime', sql.DateTime, DepartureTime)
+            .input('ArrivalTime', sql.DateTime, ArrivalTime)
             .input('Price', sql.Int, Price)
             .query(`
                 INSERT INTO Flights (FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, Price)
