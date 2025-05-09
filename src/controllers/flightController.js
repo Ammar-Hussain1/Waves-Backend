@@ -141,7 +141,7 @@ export const trackFlight = async (req, res) => {
             const result = await pool.request()
                 .input('flightNumber', sql.NVarChar, flightNumber)
                 .query(`
-                    SELECT FlightNumber, DepartureTime, ArrivalTime, DelayedTime, DelayedStatus FROM Flights WHERE flightNumber = @flightNumber;
+                    SELECT * FROM Flights WHERE flightNumber = @flightNumber;
                 `);
     
             res.status(200).json(result.recordset);
