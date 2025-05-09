@@ -44,18 +44,18 @@ export const getAllCompletedRefunds = async (req, res) => {
 
 export const updateRefundStatus = async (req, res) => {
     try {
-        const { refundId, decision } = req.params;
+        const { refundId, status } = req.params;
 
 
-        if (!refundId) {
-            return res.status(400).json({ message: 'Refund ID is required.' });
+        if (!refundId || !status) {
+            return res.status(400).json({ message: 'Refund ID and status is required.' });
         }
 
         const pool = await poolPromise;
 
         const result = await pool.request()
             .input('Id', sql.Int, refundId)
-            .input('decision', sql.NVarChar, decision)
+            .input('decision', sql.NVarChar, status)
             .query(`
                 UPDATE Refunds
                 SET RefundStatus = @decision
