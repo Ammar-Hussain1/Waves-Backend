@@ -141,7 +141,7 @@ export const trackFlight = async (req, res) => {
             const result = await pool.request()
                 .input('flightNumber', sql.NVarChar, flightNumber)
                 .query(`
-                    SELECT F.flightId, F.fligthNumber, F.DepartureAirport, F.ArrivalAirport, F.DepartureTime, F.ArrvialTime, F.DelayedTime, F.DelayedStatus, F.Price, A1.Country AS 'DepartureCountry', A1.City AS 'DepartureCity', A1.AirportName AS 'DepartureAirportName', A2.Country AS 'ArrivalCountry', A2.City AS 'ArrivalCity', A2.AirportName AS 'ArrivalAirportName'  FROM Flights F INNER JOIN Airports A1 ON F.DepartureAirport = A1.AirportID INNER JOIN Airports A2 ON F.ArrivalAirport = A2.AriportID WHERE flightNumber = @flightNumber;
+                    SELECT F.flightId, F.flightNumber, F.DepartureAirport, F.ArrivalAirport, F.DepartureTime, F.ArrvialTime, F.DelayedTime, F.DelayedStatus, F.Price, A1.Country AS 'DepartureCountry', A1.City AS 'DepartureCity', A1.AirportName AS 'DepartureAirportName', A2.Country AS 'ArrivalCountry', A2.City AS 'ArrivalCity', A2.AirportName AS 'ArrivalAirportName'  FROM Flights F INNER JOIN Airports A1 ON F.DepartureAirport = A1.AirportID INNER JOIN Airports A2 ON F.ArrivalAirport = A2.AriportID WHERE FlightNumber = @flightNumber;
                 `);
     
             res.status(200).json(result.recordset);
