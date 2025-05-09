@@ -60,6 +60,8 @@ CREATE TABLE Flights (
 	CHECK (DepartureAirport <> ArrivalAirport)
 );
 
+
+
 CREATE TABLE FlightClasses (
     ClassID INT IDENTITY(1,1) PRIMARY KEY,
     ClassName VARCHAR(50) NOT NULL CHECK (ClassName IN ('Economy', 'Business', 'First Class')),
@@ -97,9 +99,10 @@ CREATE TABLE Refunds (
     BookingID INT FOREIGN KEY REFERENCES Bookings(BookingID) ON DELETE CASCADE,
     Reason VARCHAR(255) NOT NULL,
     RefundAmount DECIMAL(10,2) NOT NULL,
-    RefundStatus VARCHAR(50) CHECK (RefundStatus IN ('Processing', 'Completed', 'Rejected')) NOT NULL,
+    RefundStatus VARCHAR(50) CHECK (RefundStatus IN ('Processing', 'Completed', 'Rejected')) DEFAULT 'Processing',
     RequestedAt DATETIME DEFAULT GETDATE()
 );
+
 
 CREATE TABLE TravelHistory (
     HistoryID INT IDENTITY PRIMARY KEY,
@@ -107,6 +110,8 @@ CREATE TABLE TravelHistory (
     BookingID INT FOREIGN KEY REFERENCES Bookings(BookingID) ON DELETE NO ACTION,
     TravelDate DATETIME NOT NULL
 );
+
+Select * from refunds;
 
 -- USERS
 INSERT INTO Users (PasswordHash, FullName, Email, UserType)
@@ -152,6 +157,9 @@ VALUES
 
 Select * from Airports WHERE AirportID = 1;Select * from Airports WHERE AirportID = 2;
 
+
+
+
 -- FLIGHTCLASSES
 INSERT INTO FlightClasses (ClassName, FlightID)
 VALUES 
@@ -196,6 +204,11 @@ VALUES
 (1, 'Double Booking', 200.00, 'Rejected'),
 (4, 'Overbooking', 260.00, 'Completed'),
 (5, 'Late Departure', 100.00, 'Processing');
+
+INSERT INTO Refunds (BookingID, Reason, RefundAmount, RefundStatus)
+VALUES (5, 'Late Departure', 100.00, 'Processing');
+
+SELECT * FROM Refunds;
 
 -- TRAVELHISTORY
 INSERT INTO TravelHistory (UserID, BookingID, TravelDate)

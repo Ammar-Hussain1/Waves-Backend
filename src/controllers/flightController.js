@@ -87,28 +87,42 @@ export const searchFlight = async (req, res) => {
                 .input('DepartureAirport', sql.Int, fromAirport)
                 .input('ArrivalAirport', sql.Int, toAirport)
                 .input('DepartureTime', sql.NVarChar, departureDate)
-                .input('ArrivalTime', sql.NVarChar, returnDate)
+                .input('ReturnTime', sql.NVarChar, returnDate)
                 .query(`
-                    SELECT * FROM Flights WHERE DepartureAirport = 1 AND ArrivalAirport = 2 AND YEAR(DepartureTime) = YEAR(@DepartureTime) AND MONTH(DepartureTime) = MONTH(@DepartureTime) AND DAY(DepartureTime) = DAY(@DepartureTime);
-                `);
-
-            const result2 = await pool.request()
-                .input('DepartureAirport', sql.Int, toAirport)
-                .input('ArrivalAirport', sql.Int, fromAirport)
-                .input('DepartureTime', sql.NVarChar, ArrivalTime)
-                .query(`
-                    SELECT * FROM Flights WHERE DepartureAirport = @DepartureAirport AND ArrivalAirport = @ArrivalAirport AND YEAR(DepartureTime) = YEAR(@DepartureTime) AND MONTH(DepartureTime) = MONTH(@DepartureTime) AND DAY(DepartureTime) = DAY(@DepartureTime);
-                `);
-                
-            if(result.recordset[0])
-    
+                    SELECT 
+                        Outbound.FlightID AS OutboundFlightID,
+                        Outbound.FlightNumber AS OutboundFlightNumber,
+                        Outbound.DepartureTime AS OutboundDepartureTime,
+                        Outbound.ArrivalTime AS OutboundArrivalTime,
+                        Outbound.Price AS OutboundPrice,
+                        
+                        ReturnFlight.FlightID AS ReturnFlightID,
+                        ReturnFlight.FlightNumber AS ReturnFlightNumber,
+                        ReturnFlight.DepartureTime AS ReturnDepartureTime,
+                        ReturnFlight.ArrivalTime AS ReturnArrivalTime,
+                        ReturnFlight.Price AS ReturnPrice
+                    FROM 
+                        Flights AS Outbound
+                    JOIN 
+                        Flights AS ReturnFlight
+                        ON Outbound.DepartureAirport = ReturnFlight.ArrivalAirport
+                        AND Outbound.ArrivalAirport = ReturnFlight.DepartureAirport
+                    WHERE 
+                        Outbound.DepartureAirport = @DepartureAirport
+                        AND Outbound.ArrivalAirport = @ArrivalAirport
+                        AND YEAR(Outbound.DepartureTime) = YEAR(@DepartureTime)
+                        AND MONTH(Outbound.DepartureTime) = MONTH(@DepartureTime)
+                        AND DAY(Outbound.DepartureTime) = DAY(@DepartureTime)
+                        AND YEAR(ReturnFlight.DepartureTime) = YEAR(@ReturnTime)
+                        AND MONTH(ReturnFlight.DepartureTime) = MONTH(@ReturnTime)
+                        AND DAY(ReturnFlight.DepartureTime) = DAY(@ReturnTime);
+                    `);
             res.status(200).json(result.recordset);
         }
         else
         {
             return res.status(400).json({message: 'Invalid Flight type'});
         }
-
     } catch (err) {
         console.error('Database error:', err);
         res.status(500).json({ message: 'Internal server error.' });
