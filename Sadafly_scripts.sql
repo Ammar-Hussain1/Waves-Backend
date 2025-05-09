@@ -78,6 +78,8 @@ CREATE TABLE Seats (
 	CONSTRAINT UQ_Flight_SeatNumber UNIQUE (FlightID, SeatNumber) 
 );
 
+SELECT * FROM FLights;
+
 SELECT * FROM Seats;
 
 CREATE TABLE Bookings (

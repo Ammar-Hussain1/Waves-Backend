@@ -9,6 +9,7 @@ import airportRoutes from "./routes/aiportRoutes.js";
 import flightRoutes from "./routes/fightRoutes.js";
 import refundsRoutes from "./routes/refundsRoutes.js"
 import contactUsRoutes from "./routes/contactUsRoutes.js"
+import seatsRoutes from "./routes/seatsRoutes.js"
 
 // import bookingRoutes from "./routes/bookingRoutes.js";
 // import paymentRoutes from "./routes/paymentRoutes.js";
@@ -33,7 +34,6 @@ app.use(session({
     }
 }));
 
-
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -42,6 +42,7 @@ app.use("/api/airports", airportRoutes);
 app.use("/api/flights", flightRoutes);
 app.use("/api/refunds", refundsRoutes);
 app.use("/api/contactUs", contactUsRoutes);
+app.use("/api/seats", seatsRoutes);
 // app.use("/api/bookings", bookingRoutes);
 // app.use("/api/payments", paymentRoutes);
 

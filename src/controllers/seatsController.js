@@ -1,0 +1,57 @@
+import { sql, poolPromise } from '../config/db.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+export const getSeats = async (req, res) => {
+    try {
+        const {flightID} = req.body;
+        if(!flightID)
+        {
+            return res.status(400).json({message : 'flightID is required.'});
+        }
+        const pool = await poolPromise;
+        const result = await pool.request()
+        .input('flightID', sql.INT, flightID)
+        .query(`SELECT S.SeatID, S.FlightID, S.SeatNumber, S.SeatClass, S.IsBooked, FC.ClassName 
+            FROM Seats S 
+            INNER JOIN 
+                FlightClasses FC ON FC.ClassID = S.SeatClass AND FC.FlightID = S.FlightID
+            WHERE 
+                S.FlightID = @flightID;`);
+        res.json(result.recordset);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const bookSeat = async (req, res) => {
+    try {
+        const { flightId, SeatID } = req.params;
+        
+        if (!flightId || !SeatID ) {
+            return res.status(400).json({ message: 'Flight ID and Seat ID are required.' });
+        }
+
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+        .input('flightID', sql.Int, flightId)
+        .input('seatID', sql.Int, SeatID)
+        .query(`
+            UPDATE Seats 
+            SET IsBooked = 1
+            WHERE FlightID = @flightID AND SeatID = @seatID;
+        `);
+
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: 'Failed to update status.' });
+        }
+
+        res.status(200).json({ message: 'Seat Booked.' });
+
+    } catch (err) {
+        console.error('Error booking seat:', err);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+};
