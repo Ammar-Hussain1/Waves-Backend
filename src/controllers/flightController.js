@@ -189,35 +189,53 @@ export const trackFlight = async (req, res) => {
 
 export const addDelay = async (req, res) => {
     try {
-        const { flightId, delayTime } = req.params;
+        const { flightId } = req.params;
+        const { delayAmount, unit } = req.body; // delayAmount is a number, unit is 'minutes' or 'hours'
 
-
-        if (!flightId || !delayTime) {
-            return res.status(400).json({ message: 'Flight ID and delayTime is required.' });
+        if (!flightId || !delayAmount || !unit) {
+            return res.status(400).json({ message: 'Flight ID, delay amount, and unit are required.' });
         }
 
         const pool = await poolPromise;
 
-        const result = await pool.request()
-            .input('Id', sql.Int, flightId)
-            .input('delayTime', sql.delayTime, delayTime)
-            .query(`
-                BEGIN TRY
-                    BEGIN TRANSACTION
-                        UPDATE Flights
-                        SET DelayedStatus = 1
-                        WHERE FlightId = @Id;
-                        
-                        UPDATE Flights
-                        SET DelayedTime = @delayTime
-                        WHERE FlightId = @Id;
-                    COMMIT;
-                END TRY
-                BEGIN CATCH
-                    IF @@TRANCOUNT > 0
-                    ROLLBACK;
-                END CATCH;
-            `);
+        // SQL code to add delay to existing DepartureTime
+const result = await pool.request()
+  .input('Id', sql.Int, flightId)
+  .input('DelayAmount', sql.Int, delayAmount)
+  .input('Unit', sql.VarChar, unit)
+  .query(`
+    BEGIN TRY
+      BEGIN TRANSACTION
+
+        DECLARE @CurrentDeparture DATETIME;
+        DECLARE @NewDelayedTime DATETIME;
+
+        SELECT @CurrentDeparture = DepartureTime FROM Flights WHERE FlightId = @Id;
+
+        IF @Unit = 'minutes'
+          SET @NewDelayedTime = DATEADD(MINUTE, @DelayAmount, @CurrentDeparture);
+        ELSE IF @Unit = 'hours'
+          SET @NewDelayedTime = DATEADD(HOUR, @DelayAmount, @CurrentDeparture);
+        ELSE
+        BEGIN
+          THROW 50000, 'Invalid time unit.', 1;
+        END
+
+        UPDATE Flights
+        SET 
+          DelayedStatus = 1,
+          DelayedTime = @NewDelayedTime
+        WHERE FlightId = @Id;
+
+      COMMIT;
+    END TRY
+    BEGIN CATCH
+      IF @@TRANCOUNT > 0
+        ROLLBACK;
+      THROW;
+    END CATCH;
+  `);
+
 
         if (result.rowsAffected[0] === 0) {
             return res.status(404).json({ message: 'Failed to update status.' });

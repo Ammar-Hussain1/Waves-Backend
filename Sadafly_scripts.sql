@@ -148,7 +148,6 @@ BEGIN
             BEGIN
                 SET @SeatNumber = CONCAT(@Row, @Letter);
 
-                -- 👇 Only insert if this seat number for this flight/class doesn't already exist (safety)
                 IF NOT EXISTS (
                     SELECT 1 FROM Seats
                     WHERE FlightID = @FlightID AND SeatNumber = @SeatNumber
