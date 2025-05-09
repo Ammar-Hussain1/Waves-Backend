@@ -12,15 +12,6 @@ export const getAllFlights = async (req, res) => {
     }
 };
 
-// FlightNumber VARCHAR(20) UNIQUE NOT NULL,
-//     DepartureAirport INT FOREIGN KEY REFERENCES Airports(AirportID),
-//     ArrivalAirport INT FOREIGN KEY REFERENCES Airports(AirportID),
-//     DepartureTime DATETIME NOT NULL,
-//     ArrivalTime DATETIME NOT NULL,
-// 	DelayedTime DATETIME,
-// 	DelayedStatus bit DEFAULT 0, 
-//     Price DECIMAL(10,2) NOT NULL,
-
 export const createFlight = async (req, res) => {
     try {
         const { FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, EconomyPrice, BusinessClassPrice, FirstClassPrice } = req.body;
@@ -77,14 +68,14 @@ export const createFlight = async (req, res) => {
 //one-way round-trip
 export const searchFlight = async (req, res) => {
     try {
-        const { flightType, fromAirport, toAirport, departureDate, returnDate } = req.body;
+        const { flightType, fromAirport, toAirport, departureDate, returnDate, flightClassType } = req.body;
         if(!flightType)
         {
             return res.status(400).json({message: 'All fields are required.'});
         }
         if(flightType == 'one-way')
         {
-            if (!fromAirport || !toAirport || !departureDate) {
+            if (!fromAirport || !toAirport || !departureDate || !flightClassType) {
                 return res.status(400).json({ message: 'All fields are required.' });
             }
             const pool = await poolPromise;
@@ -93,15 +84,35 @@ export const searchFlight = async (req, res) => {
                 .input('DepartureAirport', sql.Int, fromAirport)
                 .input('ArrivalAirport', sql.Int, toAirport)
                 .input('DepartureTime', sql.NVarChar, departureDate)
+                .input('flightClassType', sql.NVarChar, flightClassType)
                 .query(`
-                    SELECT F.flightId, F.flightNumber, F.DepartureAirport, F.ArrivalAirport, F.DepartureTime, F.ArrivalTime, F.DelayedTime, F.DelayedStatus, F.Price, A1.Country AS 'DepartureCountry', A1.City AS 'DepartureCity', A1.AirportName AS 'DepartureAirportName', A2.Country AS 'ArrivalCountry', A2.City AS 'ArrivalCity', A2.AirportName AS 'ArrivalAirportName'  FROM Flights F INNER JOIN Airports A1 ON F.DepartureAirport = A1.AirportID INNER JOIN Airports A2 ON F.ArrivalAirport = A2.AirportID WHERE F.DepartureAirport = @DepartureAirport AND F.ArrivalAirport = @ArrivalAirport AND YEAR(F.DepartureTime) = YEAR(@DepartureTime) AND MONTH(F.DepartureTime) = MONTH(@DepartureTime) AND DAY(F.DepartureTime) = DAY(@DepartureTime);
+                    SELECT 
+                        F.flightId, F.flightNumber, F.DepartureAirport, F.ArrivalAirport, F.DepartureTime, 
+                        F.ArrivalTime, F.DelayedTime, F.DelayedStatus, FC.Price, (FC.SeatCount - FC.SeatBookedCount) AS AvailableSeats, 
+                        A1.Country AS 'DepartureCountry', A1.City AS 'DepartureCity', A1.AirportName AS 'DepartureAirportName', 
+                        A2.Country AS 'ArrivalCountry', A2.City AS 'ArrivalCity', A2.AirportName AS 'ArrivalAirportName' 
+                    FROM Flights F
+                    INNER JOIN 
+                        FlightClasses FC ON F.FlightID = FC.FlightID  
+                    INNER JOIN 
+                        Airports A1 ON F.DepartureAirport = A1.AirportID 
+                    INNER JOIN 
+                        Airports A2 ON F.ArrivalAirport = A2.AirportID 
+                    WHERE 
+                        F.DepartureAirport = @DepartureAirport 
+                        AND F.ArrivalAirport = @ArrivalAirport 
+                        AND YEAR(F.DepartureTime) = YEAR(@DepartureTime) 
+                        AND MONTH(F.DepartureTime) = MONTH(@DepartureTime) 
+                        AND DAY(F.DepartureTime) = DAY(@DepartureTime) 
+                        AND (FC.SeatCount - FC.SeatBookedCount) > 0
+                        AND FC.ClassName = @flightClassType;
                 `);
     
             res.status(200).json(result.recordset);
         }
         else if(flightType == 'round-trip')
         {    
-            if (!fromAirport || !toAirport || !departureDate || !returnDate) {
+            if (!fromAirport || !toAirport || !departureDate || !returnDate || !flightClassType) {
                 return res.status(400).json({ message: 'All fields are required.' });
             }
             const pool = await poolPromise;
@@ -110,6 +121,7 @@ export const searchFlight = async (req, res) => {
                 .input('DepartureAirport', sql.Int, fromAirport)
                 .input('ArrivalAirport', sql.Int, toAirport)
                 .input('DepartureTime', sql.NVarChar, departureDate)
+                .input('flightClassType', sql.NVarChar, flightClassType)
                 .input('ReturnTime', sql.NVarChar, returnDate)
                 .query(`
                     SELECT 
@@ -117,7 +129,7 @@ export const searchFlight = async (req, res) => {
                         Outbound.FlightNumber AS OutboundFlightNumber,
                         Outbound.DepartureTime AS OutboundDepartureTime,
                         Outbound.ArrivalTime AS OutboundArrivalTime,
-                        Outbound.Price AS OutboundPrice,
+                        (FC.SeatCount - FC.SeatBookedCount) AS AvailableOutboundSeats,
                         A1.Country AS OutboundCountry,
                         A1.City AS OutboundCity,
                         A1.AirportName AS OutboundAirportName,
@@ -127,10 +139,12 @@ export const searchFlight = async (req, res) => {
                         ReturnFlight.FlightNumber AS ReturnFlightNumber,
                         ReturnFlight.DepartureTime AS ReturnDepartureTime,
                         ReturnFlight.ArrivalTime AS ReturnArrivalTime,
-                        ReturnFlight.Price AS ReturnPrice,
+                        (FC1.SeatCount - FC1.SeatBookedCount) AS AvailableReturnFlightSeats,
                         A2.Country AS ArrivalCountry,
                         A2.City AS ArrivalCity,
-                        A2.AirportName AS ArrivalAirportName
+                        A2.AirportName AS ArrivalAirportName,
+
+                        (FC1.Price + FC.Price) AS Price
                     FROM 
                         Flights AS Outbound
                     JOIN 
@@ -143,6 +157,12 @@ export const searchFlight = async (req, res) => {
                     INNER JOIN
                         Airports A2
                         ON A2.AirportID = Outbound.ArrivalAirport
+                    INNER JOIN 
+                        FlightClasses FC 
+                        ON Outbound.FlightID = FC.FlightID
+                    INNER JOIN 
+                        FlightClasses FC1
+                        ON ReturnFlight.FlightID = FC1.FlightID
                     WHERE 
                         Outbound.DepartureAirport = @DepartureAirport
                         AND Outbound.ArrivalAirport = @ArrivalAirport
@@ -151,7 +171,11 @@ export const searchFlight = async (req, res) => {
                         AND DAY(Outbound.DepartureTime) = DAY(@DepartureTime)
                         AND YEAR(ReturnFlight.DepartureTime) = YEAR(@ReturnTime)
                         AND MONTH(ReturnFlight.DepartureTime) = MONTH(@ReturnTime)
-                        AND DAY(ReturnFlight.DepartureTime) = DAY(@ReturnTime);
+                        AND DAY(ReturnFlight.DepartureTime) = DAY(@ReturnTime)
+                        AND (FC.SeatCount - FC.SeatBookedCount) > 0
+                        AND (FC1.SeatCount - FC1.SeatBookedCount) > 0
+                        AND FC.ClassName = @flightClassType
+                        AND FC1.ClassName = @flightClassType;
                     `);
             res.status(200).json(result.recordset);
         }
@@ -199,42 +223,42 @@ export const addDelay = async (req, res) => {
         const pool = await poolPromise;
 
         // SQL code to add delay to existing DepartureTime
-const result = await pool.request()
-  .input('Id', sql.Int, flightId)
-  .input('DelayAmount', sql.Int, delayAmount)
-  .input('Unit', sql.VarChar, unit)
-  .query(`
-    BEGIN TRY
-      BEGIN TRANSACTION
+        const result = await pool.request()
+        .input('Id', sql.Int, flightId)
+        .input('DelayAmount', sql.Int, delayAmount)
+        .input('Unit', sql.VarChar, unit)
+        .query(`
+            BEGIN TRY
+            BEGIN TRANSACTION
 
-        DECLARE @CurrentDeparture DATETIME;
-        DECLARE @NewDelayedTime DATETIME;
+                DECLARE @CurrentDeparture DATETIME;
+                DECLARE @NewDelayedTime DATETIME;
 
-        SELECT @CurrentDeparture = DepartureTime FROM Flights WHERE FlightId = @Id;
+                SELECT @CurrentDeparture = DepartureTime FROM Flights WHERE FlightId = @Id;
 
-        IF @Unit = 'minutes'
-          SET @NewDelayedTime = DATEADD(MINUTE, @DelayAmount, @CurrentDeparture);
-        ELSE IF @Unit = 'hours'
-          SET @NewDelayedTime = DATEADD(HOUR, @DelayAmount, @CurrentDeparture);
-        ELSE
-        BEGIN
-          THROW 50000, 'Invalid time unit.', 1;
-        END
+                IF @Unit = 'minutes'
+                SET @NewDelayedTime = DATEADD(MINUTE, @DelayAmount, @CurrentDeparture);
+                ELSE IF @Unit = 'hours'
+                SET @NewDelayedTime = DATEADD(HOUR, @DelayAmount, @CurrentDeparture);
+                ELSE
+                BEGIN
+                THROW 50000, 'Invalid time unit.', 1;
+                END
 
-        UPDATE Flights
-        SET 
-          DelayedStatus = 1,
-          DelayedTime = @NewDelayedTime
-        WHERE FlightId = @Id;
+                UPDATE Flights
+                SET 
+                DelayedStatus = 1,
+                DelayedTime = @NewDelayedTime
+                WHERE FlightId = @Id;
 
-      COMMIT;
-    END TRY
-    BEGIN CATCH
-      IF @@TRANCOUNT > 0
-        ROLLBACK;
-      THROW;
-    END CATCH;
-  `);
+            COMMIT;
+            END TRY
+            BEGIN CATCH
+            IF @@TRANCOUNT > 0
+                ROLLBACK;
+            THROW;
+            END CATCH;
+        `);
 
 
         if (result.rowsAffected[0] === 0) {

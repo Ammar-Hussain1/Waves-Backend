@@ -170,10 +170,6 @@ BEGIN
     DEALLOCATE class_cursor;
 END;
 
-
-
-Select * from refunds;
-
 -- USERS
 INSERT INTO Users (PasswordHash, FullName, Email, UserType)
 VALUES 
