@@ -128,3 +128,25 @@ export const searchFlight = async (req, res) => {
         res.status(500).json({ message: 'Internal server error.' });
     }
 };
+
+export const trackFlight = async (req, res) => {
+    try {
+        const { flightNumber } = req.body;
+        if(!flightNumber)
+        {
+            return res.status(400).json({message : 'All fields are required.'});
+        }
+            const pool = await poolPromise;
+
+            const result = await pool.request()
+                .input('flightNumber', sql.NVarChar, flightNumber)
+                .query(`
+                    SELECT FlightNumber, DepartureTime, ArrivalTime, DelayedTime, DelayedStatus FROM Flights WHERE flightNumber = @flightNumber;
+                `);
+    
+            res.status(200).json(result.recordset);
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+};

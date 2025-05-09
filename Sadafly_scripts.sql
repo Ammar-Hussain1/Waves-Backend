@@ -144,8 +144,6 @@ VALUES
 INSERT INTO UserContact (UName, Email, Phone, UMessage)
 VALUES ('Ammar', 'ammar@gmail.com', '03123456789', 'Hi I would like to meet you for business opportunities');
 
-SELECT * FROM UserContact;
-
 -- FLIGHTS
 INSERT INTO Flights (FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, DelayedTime, DelayedStatus, Price)
 VALUES 
@@ -154,11 +152,6 @@ VALUES
 ('FL003', 1, 2, '2025-06-12 09:00', '2025-06-12 13:00', NULL, 0, 240.00),
 ('FL004', 2, 1, '2025-06-13 15:00', '2025-06-13 19:00', NULL, 0, 260.00),
 ('FL005', 1, 2, '2025-06-14 10:00', '2025-06-14 14:00', NULL, 0, 280.00);
-
-Select * from Airports WHERE AirportID = 1;Select * from Airports WHERE AirportID = 2;
-
-
-
 
 -- FLIGHTCLASSES
 INSERT INTO FlightClasses (ClassName, FlightID)
@@ -209,6 +202,7 @@ INSERT INTO Refunds (BookingID, Reason, RefundAmount, RefundStatus)
 VALUES (5, 'Late Departure', 100.00, 'Processing');
 
 SELECT * FROM Refunds;
+
 
 -- TRAVELHISTORY
 INSERT INTO TravelHistory (UserID, BookingID, TravelDate)
