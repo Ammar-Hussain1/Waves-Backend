@@ -46,6 +46,7 @@ export const updateRefundStatus = async (req, res) => {
     try {
         const { refundId, decision } = req.params;
 
+
         if (!refundId) {
             return res.status(400).json({ message: 'Refund ID is required.' });
         }
