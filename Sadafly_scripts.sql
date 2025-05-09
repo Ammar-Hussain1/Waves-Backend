@@ -55,17 +55,18 @@ CREATE TABLE Flights (
     DepartureTime DATETIME NOT NULL,
     ArrivalTime DATETIME NOT NULL,
 	DelayedTime DATETIME,
-	DelayedStatus bit DEFAULT 0, 
-    Price DECIMAL(10,2) NOT NULL,
+	DelayedStatus bit DEFAULT 0,
+
 	CHECK (DepartureAirport <> ArrivalAirport)
 );
-SELECT F.flightId, F.flightNumber, F.DepartureAirport, F.ArrivalAirport, F.DepartureTime, F.ArrivalTime, F.DelayedTime, F.DelayedStatus, F.Price, A1.Country AS 'DepartureCountry', A1.City AS 'DepartureCity', A1.AirportName AS 'DepartureAirportName', A2.Country AS 'ArrivalCountry', A2.City AS 'ArrivalCity', A2.AirportName AS 'ArrivalAirportName'  FROM Flights F INNER JOIN Airports A1 ON F.DepartureAirport = A1.AirportID INNER JOIN Airports A2 ON F.ArrivalAirport = A2.AirportID WHERE FlightNumber = 'FL001';
 
-
-CREATE TABLE FlightClasses (
+CREATE TABLE FlightClasses(
     ClassID INT IDENTITY(1,1) PRIMARY KEY,
     ClassName VARCHAR(50) NOT NULL CHECK (ClassName IN ('Economy', 'Business', 'First Class')),
-    FlightID INT FOREIGN KEY REFERENCES Flights(FlightID) ON DELETE CASCADE
+    FlightID INT FOREIGN KEY REFERENCES Flights(FlightID) ON DELETE CASCADE,
+	SeatCount INT NOT NULL,
+	SeatBookedCount INT NOT NULL DEFAULT 0,
+	Price Decimal(10,2) NOT NULL
 );
 
 CREATE TABLE Seats (
@@ -73,8 +74,11 @@ CREATE TABLE Seats (
     FlightID INT FOREIGN KEY REFERENCES Flights(FlightID) ON DELETE NO ACTION,
     SeatNumber VARCHAR(10) NOT NULL,
     SeatClass INT FOREIGN KEY REFERENCES FlightClasses(ClassID) ON DELETE CASCADE,
-    IsBooked BIT DEFAULT 0
+    IsBooked BIT DEFAULT 0,
+	CONSTRAINT UQ_Flight_SeatNumber UNIQUE (FlightID, SeatNumber) 
 );
+
+SELECT * FROM Seats;
 
 CREATE TABLE Bookings (
     BookingID INT IDENTITY(1,1) PRIMARY KEY,
@@ -85,6 +89,9 @@ CREATE TABLE Bookings (
     SeatID INT FOREIGN KEY REFERENCES Seats(SeatID) ON DELETE SET NULL 
 );
 
+ALTER TABLE Bookings
+    ADD SeatID INT FOREIGN KEY REFERENCES Seats(SeatID) ON DELETE SET NULL;
+
 CREATE TABLE Payments (
     PaymentID INT IDENTITY PRIMARY KEY,
     BookingID INT FOREIGN KEY REFERENCES Bookings(BookingID) ON DELETE CASCADE,
@@ -92,7 +99,6 @@ CREATE TABLE Payments (
     PaymentStatus VARCHAR(50) CHECK (PaymentStatus IN ('Paid', 'Failed', 'Refunded')) NOT NULL,
     TransactionDate DATETIME DEFAULT GETDATE()
 );
-
 
 CREATE TABLE Refunds (
     RefundID INT IDENTITY PRIMARY KEY,
@@ -103,13 +109,69 @@ CREATE TABLE Refunds (
     RequestedAt DATETIME DEFAULT GETDATE()
 );
 
-
 CREATE TABLE TravelHistory (
     HistoryID INT IDENTITY PRIMARY KEY,
     UserID INT FOREIGN KEY REFERENCES Users(UserID) ON DELETE CASCADE,
     BookingID INT FOREIGN KEY REFERENCES Bookings(BookingID) ON DELETE NO ACTION,
     TravelDate DATETIME NOT NULL
 );
+
+CREATE PROCEDURE GenerateSeatsForFlight
+    @FlightID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (SELECT 1 FROM Seats WHERE FlightID = @FlightID)
+        RETURN;
+
+    DECLARE @ClassID INT, @ClassName VARCHAR(50), @SeatCount INT;
+    DECLARE @Row INT, @SeatPerRow INT = 6, @TotalInserted INT, @Letter CHAR(1), @SeatNumber VARCHAR(10);
+
+    DECLARE class_cursor CURSOR FOR
+        SELECT ClassID, ClassName, SeatCount
+        FROM FlightClasses
+        WHERE FlightID = @FlightID;
+
+    OPEN class_cursor;
+    FETCH NEXT FROM class_cursor INTO @ClassID, @ClassName, @SeatCount;
+
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @Row = 1;
+        SET @TotalInserted = 0;
+
+        WHILE @TotalInserted < @SeatCount
+        BEGIN
+            SET @Letter = 'A';
+            WHILE ASCII(@Letter) <= ASCII('F') AND @TotalInserted < @SeatCount
+            BEGIN
+                SET @SeatNumber = CONCAT(@Row, @Letter);
+
+                -- 👇 Only insert if this seat number for this flight/class doesn't already exist (safety)
+                IF NOT EXISTS (
+                    SELECT 1 FROM Seats
+                    WHERE FlightID = @FlightID AND SeatNumber = @SeatNumber
+                )
+                BEGIN
+                    INSERT INTO Seats (FlightID, SeatClass, SeatNumber)
+                    VALUES (@FlightID, @ClassID, @SeatNumber);
+                    SET @TotalInserted += 1;
+                END
+
+                SET @Letter = CHAR(ASCII(@Letter) + 1);
+            END
+            SET @Row += 1;
+        END
+
+        FETCH NEXT FROM class_cursor INTO @ClassID, @ClassName, @SeatCount;
+    END
+
+    CLOSE class_cursor;
+    DEALLOCATE class_cursor;
+END;
+
+
 
 Select * from refunds;
 

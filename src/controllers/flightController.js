@@ -23,9 +23,9 @@ export const getAllFlights = async (req, res) => {
 
 export const createFlight = async (req, res) => {
     try {
-        const { FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, Price } = req.body;
+        const { FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, EconomyPrice, BusinessClassPrice, FirstClassPrice } = req.body;
 
-        if (!FlightNumber || !DepartureAirport || !ArrivalAirport || !DepartureTime || !ArrivalTime || !Price) {
+        if (!FlightNumber || !DepartureAirport || !ArrivalAirport || !DepartureTime || !ArrivalTime || !EconomyPrice || !BusinessClassPrice || !FirstClassPrice) {
             return res.status(400).json({ message: 'All fields are required.' });
         }
 
@@ -33,17 +33,40 @@ export const createFlight = async (req, res) => {
 
         await pool.request()
         .input('FlightNumber', sql.NVarChar, FlightNumber) 
-        .input('DepartureAirport', sql.NVarChar, DepartureAirport) 
-        .input('ArrivalAirport', sql.NVarChar, ArrivalAirport) 
+        .input('DepartureAirport', sql.INT, DepartureAirport) 
+        .input('ArrivalAirport', sql.INT, ArrivalAirport) 
         .input('DepartureTime', sql.DateTime, DepartureTime) 
         .input('ArrivalTime', sql.DateTime, ArrivalTime) 
-        .input('Price', sql.Int, Price)
+        .input('EconomyPrice', sql.Int, EconomyPrice)
+        .input('BusinessClassPrice', sql.Int, BusinessClassPrice)
+        .input('FirstClassPrice', sql.Int, FirstClassPrice)
             .query(`
-                INSERT INTO Flights (FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, Price)
-                VALUES (@FlightNumber, @DepartureAirport, @ArrivalAirport, @DepartureTime, @ArrivalTime, @Price)
+                BEGIN TRY
+                    BEGIN TRANSACTION
+                        INSERT INTO Flights (FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime)
+                        VALUES (@FlightNumber, @DepartureAirport, @ArrivalAirport, @DepartureTime, @ArrivalTime);
+
+                        DECLARE @FlightID INT = SCOPE_IDENTITY();
+
+                        INSERT INTO FlightClasses (ClassName, FlightID, SeatCount, Price)
+                        VALUES ('First Class', @FlightID, 12, @FirstClassPrice),
+                        ('Business', @FlightID, 18, @BusinessClassPrice),
+                        ('Economy', @FlightID, 30, @EconomyPrice);
+
+                        EXEC GenerateSeatsForFlight @FlightID;
+
+                    COMMIT;
+                END TRY
+                BEGIN CATCH
+                    IF @@TRANCOUNT > 0
+                    ROLLBACK;
+
+                    DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();
+                    THROW 50000, @ErrorMessage, 1;
+                END CATCH;
             `);
 
-        res.status(201).json({ message: 'Contact message submitted successfully.' });
+        res.status(201).json({ message: 'Flight Created successfully.' });
 
     } catch (err) {
         console.error('Database error:', err);
