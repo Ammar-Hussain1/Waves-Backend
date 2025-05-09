@@ -71,7 +71,7 @@ export const searchFlight = async (req, res) => {
                 .input('ArrivalAirport', sql.Int, toAirport)
                 .input('DepartureTime', sql.NVarChar, departureDate)
                 .query(`
-                    SELECT * FROM Flights WHERE DepartureAirport = @DepartureAirport AND ArrivalAirport = @ArrivalAirport AND YEAR(DepartureTime) = YEAR(@DepartureTime) AND MONTH(DepartureTime) = MONTH(@DepartureTime) AND DAY(DepartureTime) = DAY(@DepartureTime);
+                    SELECT F.flightId, F.flightNumber, F.DepartureAirport, F.ArrivalAirport, F.DepartureTime, F.ArrivalTime, F.DelayedTime, F.DelayedStatus, F.Price, A1.Country AS 'DepartureCountry', A1.City AS 'DepartureCity', A1.AirportName AS 'DepartureAirportName', A2.Country AS 'ArrivalCountry', A2.City AS 'ArrivalCity', A2.AirportName AS 'ArrivalAirportName'  FROM Flights F INNER JOIN Airports A1 ON F.DepartureAirport = A1.AirportID INNER JOIN Airports A2 ON F.ArrivalAirport = A2.AirportID WHERE F.DepartureAirport = @DepartureAirport AND F.ArrivalAirport = @ArrivalAirport AND YEAR(F.DepartureTime) = YEAR(@DepartureTime) AND MONTH(F.DepartureTime) = MONTH(@DepartureTime) AND DAY(F.DepartureTime) = DAY(@DepartureTime);
                 `);
     
             res.status(200).json(result.recordset);
@@ -95,18 +95,31 @@ export const searchFlight = async (req, res) => {
                         Outbound.DepartureTime AS OutboundDepartureTime,
                         Outbound.ArrivalTime AS OutboundArrivalTime,
                         Outbound.Price AS OutboundPrice,
+                        A1.Country AS OutboundCountry,
+                        A1.City AS OutboundCity,
+                        A1.AirportName AS OutboundAirportName,
+
                         
                         ReturnFlight.FlightID AS ReturnFlightID,
                         ReturnFlight.FlightNumber AS ReturnFlightNumber,
                         ReturnFlight.DepartureTime AS ReturnDepartureTime,
                         ReturnFlight.ArrivalTime AS ReturnArrivalTime,
-                        ReturnFlight.Price AS ReturnPrice
+                        ReturnFlight.Price AS ReturnPrice,
+                        A2.Country AS ArrivalCountry,
+                        A2.City AS ArrivalCity,
+                        A2.AirportName AS ArrivalAirportName
                     FROM 
                         Flights AS Outbound
                     JOIN 
                         Flights AS ReturnFlight
                         ON Outbound.DepartureAirport = ReturnFlight.ArrivalAirport
                         AND Outbound.ArrivalAirport = ReturnFlight.DepartureAirport
+                    INNER JOIN 
+                        Airports A1 
+                        ON A1.AirportID = Outbound.DepartureAirport
+                    INNER JOIN
+                        Airports A2
+                        ON A2.AirportID = Outbound.ArrivalAirport
                     WHERE 
                         Outbound.DepartureAirport = @DepartureAirport
                         AND Outbound.ArrivalAirport = @ArrivalAirport
