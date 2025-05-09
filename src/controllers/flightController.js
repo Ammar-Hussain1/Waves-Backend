@@ -150,3 +150,47 @@ export const trackFlight = async (req, res) => {
         res.status(500).json({ message: 'Internal server error.' });
     }
 };
+
+export const addDelay = async (req, res) => {
+    try {
+        const { flightId, delayTime } = req.params;
+
+
+        if (!flightId || !delayTime) {
+            return res.status(400).json({ message: 'Flight ID and delayTime is required.' });
+        }
+
+        const pool = await poolPromise;
+
+        const result = await pool.request()
+            .input('Id', sql.Int, flightId)
+            .input('delayTime', sql.delayTime, delayTime)
+            .query(`
+                BEGIN TRY
+                    BEGIN TRANSACTION
+                        UPDATE Flights
+                        SET DelayedStatus = 1
+                        WHERE FlightId = @Id;
+                        
+                        UPDATE Flights
+                        SET DelayedTime = @delayTime
+                        WHERE FlightId = @Id;
+                    COMMIT;
+                END TRY
+                BEGIN CATCH
+                    IF @@TRANCOUNT > 0
+                    ROLLBACK;
+                END CATCH;
+            `);
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: 'Failed to update status.' });
+        }
+
+        res.status(200).json({ message: 'Delayed status updated.' });
+
+    } catch (err) {
+        console.error('Error updating Delayed status:', err);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+};
