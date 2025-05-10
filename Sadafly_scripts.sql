@@ -60,6 +60,29 @@ CREATE TABLE Flights (
 	CHECK (DepartureAirport <> ArrivalAirport)
 );
 
+CREATE SEQUENCE FlightNumberSeq 
+START WITH 20 
+INCREMENT BY 1;
+
+
+CREATE TRIGGER trg_InsertFlights
+ON Flights
+INSTEAD OF INSERT
+AS
+BEGIN
+    INSERT INTO Flights (FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, DelayedTime, DelayedStatus)
+    SELECT
+        'FL' + RIGHT('0000' + CAST(NEXT VALUE FOR FlightNumberSeq AS VARCHAR(4)), 4),
+        DepartureAirport,
+        ArrivalAirport,
+        DepartureTime,
+        ArrivalTime,
+        DelayedTime,
+        DelayedStatus
+    FROM INSERTED;
+END;
+
+
 CREATE TABLE FlightClasses(
     ClassID INT IDENTITY(1,1) PRIMARY KEY,
     ClassName VARCHAR(50) NOT NULL CHECK (ClassName IN ('Economy', 'Business', 'First Class')),
@@ -68,6 +91,7 @@ CREATE TABLE FlightClasses(
 	SeatBookedCount INT NOT NULL DEFAULT 0,
 	Price Decimal(10,2) NOT NULL
 );
+
 
 CREATE TABLE Seats (
     SeatID INT IDENTITY PRIMARY KEY,
@@ -259,9 +283,6 @@ VALUES
 
 INSERT INTO Refunds (BookingID, Reason, RefundAmount, RefundStatus)
 VALUES (5, 'Late Departure', 100.00, 'Processing');
-
-SELECT * FROM Refunds;
-
 
 -- TRAVELHISTORY
 INSERT INTO TravelHistory (UserID, BookingID, TravelDate)
@@ -498,9 +519,6 @@ INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES (
 
 -- Ireland
 INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Ireland', 'Dublin Airport', 'Dublin', 'DUB', 'EIDW');
-
--- Israel
-INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Israel', 'Ben Gurion International Airport', 'Tel Aviv', 'TLV', 'LLBG');
 
 -- Italy
 INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Italy', 'Leonardo da Vinci International Airport', 'Rome', 'FCO', 'LIRF');
@@ -840,6 +858,5 @@ INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES (
 
 -- Zimbabwe
 INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Zimbabwe', 'Harare International Airport', 'Harare', 'HRE', 'FVHA');
-
 
 SELECT * FROM airports;

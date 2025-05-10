@@ -14,16 +14,15 @@ export const getAllFlights = async (req, res) => {
 
 export const createFlight = async (req, res) => {
     try {
-        const { FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, EconomyPrice, BusinessClassPrice, FirstClassPrice } = req.body;
+        const { DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, EconomyPrice, BusinessClassPrice, FirstClassPrice } = req.body;
 
-        if (!FlightNumber || !DepartureAirport || !ArrivalAirport || !DepartureTime || !ArrivalTime || !EconomyPrice || !BusinessClassPrice || !FirstClassPrice) {
+        if ( !DepartureAirport || !ArrivalAirport || !DepartureTime || !ArrivalTime || !EconomyPrice || !BusinessClassPrice || !FirstClassPrice) {
             return res.status(400).json({ message: 'All fields are required.' });
         }
 
         const pool = await poolPromise;
 
         await pool.request()
-        .input('FlightNumber', sql.NVarChar, FlightNumber) 
         .input('DepartureAirport', sql.INT, DepartureAirport) 
         .input('ArrivalAirport', sql.INT, ArrivalAirport) 
         .input('DepartureTime', sql.DateTime, DepartureTime) 
@@ -34,8 +33,8 @@ export const createFlight = async (req, res) => {
             .query(`
                 BEGIN TRY
                     BEGIN TRANSACTION
-                        INSERT INTO Flights (FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime)
-                        VALUES (@FlightNumber, @DepartureAirport, @ArrivalAirport, @DepartureTime, @ArrivalTime);
+                        INSERT INTO Flights (DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime)
+                        VALUES ( @DepartureAirport, @ArrivalAirport, @DepartureTime, @ArrivalTime);
 
                         DECLARE @FlightID INT = SCOPE_IDENTITY();
 
