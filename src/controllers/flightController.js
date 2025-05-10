@@ -212,10 +212,9 @@ export const trackFlight = async (req, res) => {
 
 export const addDelay = async (req, res) => {
     try {
-        const { flightId } = req.params;
+        const { delayFlightNumber } = req.params;
         const { delayAmount, unit } = req.body; // delayAmount is a number, unit is 'minutes' or 'hours'
-
-        if (!flightId || !delayAmount || !unit) {
+        if (!delayFlightNumber || !delayAmount || !unit) {
             return res.status(400).json({ message: 'Flight ID, delay amount, and unit are required.' });
         }
 
@@ -223,7 +222,7 @@ export const addDelay = async (req, res) => {
 
         // SQL code to add delay to existing DepartureTime
         const result = await pool.request()
-        .input('Id', sql.Int, flightId)
+        .input('flightNumber', sql.NVarChar, delayFlightNumber)
         .input('DelayAmount', sql.Int, delayAmount)
         .input('Unit', sql.VarChar, unit)
         .query(`
@@ -233,7 +232,7 @@ export const addDelay = async (req, res) => {
                 DECLARE @CurrentDeparture DATETIME;
                 DECLARE @NewDelayedTime DATETIME;
 
-                SELECT @CurrentDeparture = DepartureTime FROM Flights WHERE FlightId = @Id;
+                SELECT @CurrentDeparture = DepartureTime FROM Flights WHERE FlightNumber = @flightNumber;
 
                 IF @Unit = 'minutes'
                 SET @NewDelayedTime = DATEADD(MINUTE, @DelayAmount, @CurrentDeparture);
@@ -248,7 +247,7 @@ export const addDelay = async (req, res) => {
                 SET 
                 DelayedStatus = 1,
                 DelayedTime = @NewDelayedTime
-                WHERE FlightId = @Id;
+                WHERE FlightNumber = @flightNumber;
 
             COMMIT;
             END TRY

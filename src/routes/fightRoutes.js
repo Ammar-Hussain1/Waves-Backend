@@ -7,7 +7,7 @@ router.get("/", flightController.getAllFlights);
 router.post("/createFlight", flightController.createFlight);
 router.post("/searchFlight", flightController.searchFlight);
 router.post("/trackflight", flightController.trackFlight);
-router.patch("/addDelay/:flightId", flightController.addDelay);
+router.patch("/addDelay/:delayFlightNumber", flightController.addDelay);
 
 
 export default router;
