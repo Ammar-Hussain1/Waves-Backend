@@ -43,12 +43,19 @@ export const bookSeat = async (req, res) => {
             WHERE FlightID = @flightID AND SeatID = @seatID;
         `);
 
+        const result1 = pool.request()
+        .input('seatID', sql.Int, SeatID)
+        .input('flightID', sql.Int, flightId)
+        .query(`
+            SELECT * FROM Seats Where SeatID = @seatID AND FlightID = @flightID;
+            `);
+
 
         if (result.rowsAffected[0] === 0) {
             return res.status(404).json({ message: 'Failed to update status.' });
         }
 
-        res.status(200).json({ message: 'Seat Booked.' });
+        res.status(200).json({ message: 'Seat Booked.',  seat : result1.recordset});
 
     } catch (err) {
         console.error('Error booking seat:', err);

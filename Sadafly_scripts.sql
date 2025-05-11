@@ -11,7 +11,7 @@ CREATE TABLE Users (
     UserType VARCHAR(50) CHECK (UserType IN ('Customer', 'Admin')) NOT NULL,
     CreatedAt DATETIME DEFAULT GETDATE()
 );
-
+SELECT * FROM USERS;
 CREATE TABLE UserAddress(
     AddressID INT PRIMARY KEY IDENTITY(1,1),
     HouseNoAndStreet VARCHAR(255) NOT NULL,
