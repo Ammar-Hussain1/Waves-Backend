@@ -7,7 +7,7 @@ export const getSeats = async (req, res) => {
         const {flightID, flightClassType} = req.body;
         if(!flightID || !flightClassType)
         {
-            return res.status(400).json({message : 'flightID is required.'});
+            return res.status(400).json({message : 'flightID and flightClassType is required.'});
         }
         const pool = await poolPromise;
         const result = await pool.request()
