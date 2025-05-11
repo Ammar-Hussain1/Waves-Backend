@@ -12,7 +12,7 @@ export const getSeats = async (req, res) => {
         const pool = await poolPromise;
         const result = await pool.request()
         .input('flightID', sql.INT, flightID)
-        .input('flightClassType', sql.Int, flightClassType)
+        .input('flightClassType', sql.VarChar, flightClassType)
         .query(`SELECT S.SeatID, S.FlightID, S.SeatNumber, S.SeatClass, S.IsBooked, FC.ClassName 
             FROM Seats S 
             INNER JOIN 
