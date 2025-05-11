@@ -4,20 +4,21 @@ dotenv.config();
 
 export const getSeats = async (req, res) => {
     try {
-        const {flightID} = req.body;
-        if(!flightID)
+        const {flightID, flightClassType} = req.body;
+        if(!flightID || !flightClassType)
         {
             return res.status(400).json({message : 'flightID is required.'});
         }
         const pool = await poolPromise;
         const result = await pool.request()
         .input('flightID', sql.INT, flightID)
+        .input('flightClassType', sql.Int, flightClassType)
         .query(`SELECT S.SeatID, S.FlightID, S.SeatNumber, S.SeatClass, S.IsBooked, FC.ClassName 
             FROM Seats S 
             INNER JOIN 
                 FlightClasses FC ON FC.ClassID = S.SeatClass AND FC.FlightID = S.FlightID
             WHERE 
-                S.FlightID = @flightID;`);
+                S.FlightID = @flightID AND FC.ClassName = @flightClassType;`);
         res.json(result.recordset);
     } catch (error) {
         res.status(500).json({ error: error.message });
