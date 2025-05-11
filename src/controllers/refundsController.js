@@ -42,6 +42,30 @@ export const getAllCompletedRefunds = async (req, res) => {
     }
 };
 
+export const createRefund = async (req, res) => {
+    try {
+        const {BookingID, Reason} = req.body;
+        const pool = await poolPromise;
+        const result = await pool.request()
+        .input('bookingID', sql.Int, BookingID)
+        .input('reason', sql.NVarChar, Reason)
+        .query(`
+            DECLARE @RefundAmount;
+            
+            SELECT @RefundAmount = FC.Price FROM Bookings B 
+            INNER JOIN FlightClasses FC
+                ON FC.FlightID = B.FlightID
+            WHERE B.SeatClass = FC.ClassID;
+
+            INSERT INTO Refunds(BookingID, Reason, RefundAmount)
+            VALUES (@bookingID, @reason, @RefundAmount);
+            `);
+        res.json(result.recordset);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 export const updateRefundStatus = async (req, res) => {
     try {
         const { refundId, status } = req.params;

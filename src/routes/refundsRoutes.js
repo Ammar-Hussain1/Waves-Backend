@@ -8,5 +8,6 @@ router.get("/Processing", refundsController.getAllProcessingRefunds);
 router.get("/Rejected", refundsController.getAllRejectedRefunds);
 router.get("/Completed", refundsController.getAllCompletedRefunds);
 router.patch('/:refundId/:status', refundsController.updateRefundStatus);
+router.post("/applyRefund", refundsController.createRefund);
 
 export default router;
