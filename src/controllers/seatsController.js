@@ -50,8 +50,6 @@ export const bookSeat = async (req, res) => {
         .query(`
             SELECT * FROM Seats Where SeatID = @seatID AND FlightID = @flightID;
             `);
-
-
         if (result.rowsAffected[0] === 0) {
             return res.status(404).json({ message: 'Failed to update status.' });
         }

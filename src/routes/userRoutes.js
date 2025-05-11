@@ -8,9 +8,25 @@ const router = express.Router();
 
 router.post('/register', userController.registerUser);
 
-router.post('/login', passport.authenticate('local'), (req, res) => {
-  res.json({ message: 'Logged in successfully', user: req.user });
-});
+router.post('/login', (req, res, next) => {
+    passport.authenticate('local', (err, user, info) => {
+      if (err) {
+        return next(err);
+      }
+
+      if (!user) {
+        return res.status(401).json({ error: info?.message || 'Invalid email or password' });
+      }
+
+      req.logIn(user, (err) => {
+        if (err) {
+          return next(err);
+        }
+        return res.json({ message: 'Logged in successfully', user });
+      });
+    })(req, res, next);
+  }
+);
 
 router.get("/admin-data", ensureAdmin, userController.getAllUsers);
 router.get("/me", ensureAuthenticated, (req, res) => {

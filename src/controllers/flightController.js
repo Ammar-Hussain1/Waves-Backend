@@ -419,3 +419,67 @@ export const addDelay = async (req, res) => {
         res.status(500).json({ message: 'Internal server error.' });
     }
 };
+
+
+export const getAllFlightsOfAUser = async (req, res) => {
+    try {
+        const { delayFlightNumber } = req.params;
+        const { delayAmount, unit } = req.body; // delayAmount is a number, unit is 'minutes' or 'hours'
+        if (!delayFlightNumber || !delayAmount || !unit) {
+            return res.status(400).json({ message: 'Flight ID, delay amount, and unit are required.' });
+        }
+
+        const pool = await poolPromise;
+
+        // SQL code to add delay to existing DepartureTime
+        const result = await pool.request()
+        .input('flightNumber', sql.NVarChar, delayFlightNumber)
+        .input('DelayAmount', sql.Int, delayAmount)
+        .input('Unit', sql.VarChar, unit)
+        .query(`
+            BEGIN TRY
+            BEGIN TRANSACTION
+
+                DECLARE @CurrentDeparture DATETIME;
+                DECLARE @NewDelayedTime DATETIME;
+
+                SELECT @CurrentDeparture = DepartureTime FROM Flights WHERE FlightNumber = @flightNumber;
+
+                IF @Unit = 'minutes'
+                SET @NewDelayedTime = DATEADD(MINUTE, @DelayAmount, @CurrentDeparture);
+                ELSE IF @Unit = 'hours'
+                SET @NewDelayedTime = DATEADD(HOUR, @DelayAmount, @CurrentDeparture);
+                ELSE
+                BEGIN
+                THROW 50000, 'Invalid time unit.', 1;
+                END
+
+                UPDATE Flights
+                SET 
+                DelayedStatus = 1,
+                DelayedTime = @NewDelayedTime
+                WHERE FlightNumber = @flightNumber;
+
+            COMMIT;
+            END TRY
+            BEGIN CATCH
+            IF @@TRANCOUNT > 0
+                ROLLBACK;
+            THROW;
+            END CATCH;
+        `);
+
+
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: 'Failed to update status.' });
+        }
+
+        res.status(200).json({ message: 'Delayed status updated.' });
+
+    } catch (err) {
+        console.error('Error updating Delayed status:', err);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+};
+
+
