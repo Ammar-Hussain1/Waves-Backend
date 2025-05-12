@@ -57,20 +57,20 @@ export const getUserById = async (req, res) => {
 
 export const getUserInfo = async (req, res) => {
   try {
-    const userID = req.body;
+    const {UserID} = req.body;
     const pool = await poolPromise;
-    const result = await pool.request().input("UserID", sql.Int, userID)
-      .query(`SELECT U.UserID, U.FullName, U.Email, UI.PrimaryContact, UA.HouseNumber, UA.Street, UA.City, UA.Country   
+    const result = await pool.request()
+    .input("UserID", sql.Int, UserID)
+    .query(`SELECT U.UserID, U.FullName, UI.Email, UI.PrimaryContact, UA.HouseNumber, UA.Street, UA.City, UA.Country   
                 FROM Users U 
                 INNER JOIN UserInfo UI 
-                    ON UI.UserID = U.UserID
+                    ON UI.UserID = U.UserID 
                 INNER JOIN UserAddress UA 
                     ON UA.AddressID = UI.Uaddress 
-                WHERE UserID = @UserID`);
+                WHERE U.UserID = @UserID`);
 
     if (result.recordset.length === 0)
       return res.status(404).json({ message: "User not found" });
-
     res.json(result.recordset[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -79,7 +79,7 @@ export const getUserInfo = async (req, res) => {
 
 export const updateUserInfo = async (req, res) => {
   const {
-    userID,
+    UserID,
     fullName,
     HouseNumber,
     Street,
@@ -93,7 +93,7 @@ export const updateUserInfo = async (req, res) => {
   const transaction = new sql.Transaction(pool);
 
   if (
-    !userID ||
+    !UserID ||
     !fullName ||
     !HouseNumber ||
     !Street ||
@@ -110,9 +110,9 @@ export const updateUserInfo = async (req, res) => {
 
     const checkResult = await transaction
       .request()
-      .input("UserID", sql.Int, userID)
+      .input("UserID", sql.Int, UserID)
       .query(
-        "SELECT UI.UserInfo, UI.UAddress FROM UserInfo UI WHERE UI.UserID = @UserID"
+        "SELECT UI.UserInfoID, UI.UAddress FROM UserInfo UI WHERE UI.UserID = @UserID"
       );
 
     if (checkResult.recordset.length > 0) {
@@ -133,7 +133,7 @@ export const updateUserInfo = async (req, res) => {
 
       await transaction
         .request()
-        .input("UserID", sql.Int, userID)
+        .input("UserID", sql.Int, UserID)
         .input("PrimaryContact", sql.VarChar, PrimaryContact)
         .input('Email', sql.VarChar, Email)
         .query(`
@@ -144,7 +144,7 @@ export const updateUserInfo = async (req, res) => {
 
       await transaction
         .request()
-        .input("UserID", sql.Int, userID)
+        .input("UserID", sql.Int, UserID)
         .input("FullName", sql.VarChar, fullName)
         .query(`
           UPDATE Users
@@ -170,18 +170,18 @@ export const updateUserInfo = async (req, res) => {
 
       await transaction
         .request()
-        .input("UserID", sql.Int, userID)
+        .input("UserID", sql.Int, UserID)
         .input("PrimaryContact", sql.VarChar, PrimaryContact)
         .input("UAddress", sql.Int, newAddressID)
         .input("Email", sql.VarChar, Email)
         .query(`
           INSERT INTO UserInfo (UserID, PrimaryContact, Email, UAddress)
-          VALUES (@UserID, @PrimaryContact, Email, @UAddress)
+          VALUES (@UserID, @PrimaryContact, @Email, @UAddress)
         `);
 
       await transaction
         .request()
-        .input("UserID", sql.Int, userID)
+        .input("UserID", sql.Int, UserID)
         .input("FullName", sql.VarChar, fullName)
         .query(`
           UPDATE Users

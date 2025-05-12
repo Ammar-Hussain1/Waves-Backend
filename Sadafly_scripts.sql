@@ -15,6 +15,9 @@ CREATE TABLE Users (
 );
 
 SELECT * FROM USERS;
+SELECT * FROM UserInfo;
+SELECT * FROM UserAddress;
+
 CREATE TABLE UserAddress(
     AddressID INT PRIMARY KEY IDENTITY(1,1),
 	HouseNumber INT NOT NULL,
@@ -24,8 +27,9 @@ CREATE TABLE UserAddress(
 );
 
 CREATE TABLE UserInfo(
-    UserInfo INT PRIMARY KEY IDENTITY(1,1),
+    UserInfoID INT PRIMARY KEY IDENTITY(1,1),
     UserID INT FOREIGN KEY REFERENCES Users(UserID) ON DELETE CASCADE,
+	Email VARCHAR(255) NOT NULL,
     PrimaryContact VARCHAR(20) NOT NULL,
     SecondaryContact VARCHAR(20),
     UAddress INT FOREIGN KEY REFERENCES UserAddress(AddressID) 
