@@ -3,6 +3,8 @@ DROP DATABASE SadaflyDB;
 CREATE DATABASE SadaflyDB;
 USE SadaflyDB;
 
+SELECT * FROM Userinfo;
+
 CREATE TABLE Users (
     UserID INT PRIMARY KEY IDENTITY(1,1),
     PasswordHash VARCHAR(255) NOT NULL,
@@ -11,14 +13,14 @@ CREATE TABLE Users (
     UserType VARCHAR(50) CHECK (UserType IN ('Customer', 'Admin')) NOT NULL,
     CreatedAt DATETIME DEFAULT GETDATE()
 );
+
 SELECT * FROM USERS;
 CREATE TABLE UserAddress(
     AddressID INT PRIMARY KEY IDENTITY(1,1),
-    HouseNoAndStreet VARCHAR(255) NOT NULL,
-    StateA VARCHAR(255) NOT NULL, 
+	HouseNumber INT NOT NULL,
+    Street VARCHAR(255) NOT NULL,
     City VARCHAR(255) NOT NULL,
-    Country VARCHAR(255) NOT NULL,
-    POSTALCODE INT NOT NULL
+    Country VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE UserInfo(

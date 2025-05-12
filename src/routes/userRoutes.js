@@ -7,6 +7,8 @@ const router = express.Router();
 
 
 router.post('/register', userController.registerUser);
+router.post('/getUserInfo', userController.getUserInfo);
+router.post('/updateUserInfo', userController.updateUserInfo);
 
 router.post('/login', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
