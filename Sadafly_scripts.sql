@@ -14,10 +14,6 @@ CREATE TABLE Users (
     CreatedAt DATETIME DEFAULT GETDATE()
 );
 
-SELECT * FROM USERS;
-SELECT * FROM UserInfo;
-SELECT * FROM UserAddress;
-
 CREATE TABLE UserAddress(
     AddressID INT PRIMARY KEY IDENTITY(1,1),
 	HouseNumber INT NOT NULL,
@@ -66,7 +62,6 @@ CREATE TABLE Flights (
 	CHECK (DepartureAirport <> ArrivalAirport)
 );
 
-SELECT * FROM AIRPORTS;
 CREATE SEQUENCE FlightNumberSeq 
 START WITH 20 
 INCREMENT BY 1;
@@ -98,9 +93,6 @@ CREATE TABLE FlightClasses(
 	Price Decimal(10,2) NOT NULL
 );
 
-SELECT * FROM FLIGHTS;
-SELECT * FROM FLIGHTCLASSES;
-
 CREATE TABLE Seats (
     SeatID INT IDENTITY PRIMARY KEY,
     FlightID INT FOREIGN KEY REFERENCES Flights(FlightID) ON DELETE NO ACTION,
@@ -109,12 +101,6 @@ CREATE TABLE Seats (
     IsBooked BIT DEFAULT 0,
 	CONSTRAINT UQ_Flight_SeatNumber UNIQUE (FlightID, SeatNumber) 
 );
-
-SELECT * FROM Seats;
-
-SELECT * FROM FLights;
-
-SELECT * FROM Seats;
 
 CREATE TABLE Bookings (
     BookingID INT IDENTITY(1,1) PRIMARY KEY,
@@ -125,11 +111,10 @@ CREATE TABLE Bookings (
     SeatID INT FOREIGN KEY REFERENCES Seats(SeatID) ON DELETE SET NULL 
 );
 
-
 CREATE TABLE Payments (
     PaymentID INT IDENTITY PRIMARY KEY,
     BookingID INT FOREIGN KEY REFERENCES Bookings(BookingID) ON DELETE CASCADE,
-    Amount DECIMAL(10,2) NOT NULL,
+    Amount INT NOT NULL,
     PaymentStatus VARCHAR(50) CHECK (PaymentStatus IN ('Paid', 'Failed', 'Refunded')) NOT NULL,
     TransactionDate DATETIME DEFAULT GETDATE()
 );
