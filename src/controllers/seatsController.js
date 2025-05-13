@@ -74,7 +74,7 @@ export const bookSeat = async (req, res) => {
                     SET IsBooked = 1 
                 WHERE 
                     SeatID = @seatID;
-
+                    
                 DECLARE @flightClassID INT;
 
                 SELECT @flightClassID = FC.ClassID
@@ -121,7 +121,7 @@ export const bookSeat = async (req, res) => {
       res.status(400).json({ message: "Apologies, Seat Already Booked" });
     }
   } catch (err) {
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -278,6 +278,6 @@ export const bookSeatRoundTrip = async (req, res) => {
     }
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "Internal server error." });
+    res.status(500).json({ message: err });
   }
 };

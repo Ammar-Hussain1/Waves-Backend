@@ -104,12 +104,33 @@ CREATE TABLE Seats (
 
 CREATE TABLE Bookings (
     BookingID INT IDENTITY(1,1) PRIMARY KEY,
+	BookingNumber VarChar(20) UNIQUE NOT NULL,
     UserID INT FOREIGN KEY REFERENCES Users(UserID) ON DELETE CASCADE,
     FlightID INT FOREIGN KEY REFERENCES Flights(FlightID) ON DELETE NO ACTION, 
     BookingDate DATETIME DEFAULT GETDATE(),
     Status VARCHAR(50) CHECK (Status IN ('Confirmed', 'Cancelled', 'Pending')) NOT NULL,
     SeatID INT FOREIGN KEY REFERENCES Seats(SeatID) ON DELETE SET NULL 
 );
+
+CREATE SEQUENCE BookingNumberSeq 
+START WITH 1 
+INCREMENT BY 1;
+
+CREATE TRIGGER trg_InsertBookings
+ON Bookings
+INSTEAD OF INSERT
+AS
+BEGIN
+    INSERT INTO Bookings (BookingNumber, UserID, FlightID, BookingDate, Status, SeatID)
+    SELECT
+        'BK' + RIGHT('0000' + CAST(NEXT VALUE FOR BookingNumberSeq AS VARCHAR(4)), 4),
+        UserID,
+        FlightID,
+        BookingDate,
+        Status,
+        SeatID
+    FROM INSERTED;
+END;
 
 CREATE TABLE Payments (
     PaymentID INT IDENTITY PRIMARY KEY,
@@ -119,14 +140,17 @@ CREATE TABLE Payments (
     TransactionDate DATETIME DEFAULT GETDATE()
 );
 
+
 CREATE TABLE Refunds (
     RefundID INT IDENTITY PRIMARY KEY,
     BookingID INT FOREIGN KEY REFERENCES Bookings(BookingID) ON DELETE CASCADE,
     Reason VARCHAR(255) NOT NULL,
-    RefundAmount DECIMAL(10,2) NOT NULL,
+    RefundAmount INT NOT NULL,
     RefundStatus VARCHAR(50) CHECK (RefundStatus IN ('Processing', 'Completed', 'Rejected')) DEFAULT 'Processing',
     RequestedAt DATETIME DEFAULT GETDATE()
 );
+
+SELECT * FROM SEATS WHERE FlightID = 45;
 
 CREATE TABLE TravelHistory (
     HistoryID INT IDENTITY PRIMARY KEY,
