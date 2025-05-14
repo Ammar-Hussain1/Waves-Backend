@@ -14,10 +14,6 @@ CREATE TABLE Users (
     CreatedAt DATETIME DEFAULT GETDATE()
 );
 
-SELECT * FROM USERS;
-SELECT * FROM UserInfo;
-SELECT * FROM UserAddress;
-
 CREATE TABLE UserAddress(
     AddressID INT PRIMARY KEY IDENTITY(1,1),
 	HouseNumber INT NOT NULL,
@@ -66,7 +62,6 @@ CREATE TABLE Flights (
 	CHECK (DepartureAirport <> ArrivalAirport)
 );
 
-SELECT * FROM AIRPORTS;
 CREATE SEQUENCE FlightNumberSeq 
 START WITH 20 
 INCREMENT BY 1;
@@ -98,9 +93,6 @@ CREATE TABLE FlightClasses(
 	Price Decimal(10,2) NOT NULL
 );
 
-SELECT * FROM FLIGHTS;
-SELECT * FROM FLIGHTCLASSES;
-
 CREATE TABLE Seats (
     SeatID INT IDENTITY PRIMARY KEY,
     FlightID INT FOREIGN KEY REFERENCES Flights(FlightID) ON DELETE NO ACTION,
@@ -110,14 +102,9 @@ CREATE TABLE Seats (
 	CONSTRAINT UQ_Flight_SeatNumber UNIQUE (FlightID, SeatNumber) 
 );
 
-SELECT * FROM Seats;
-
-SELECT * FROM FLights;
-
-SELECT * FROM Seats;
-
 CREATE TABLE Bookings (
     BookingID INT IDENTITY(1,1) PRIMARY KEY,
+	BookingNumber VarChar(20) UNIQUE NOT NULL,
     UserID INT FOREIGN KEY REFERENCES Users(UserID) ON DELETE CASCADE,
     FlightID INT FOREIGN KEY REFERENCES Flights(FlightID) ON DELETE NO ACTION, 
     BookingDate DATETIME DEFAULT GETDATE(),
@@ -125,23 +112,45 @@ CREATE TABLE Bookings (
     SeatID INT FOREIGN KEY REFERENCES Seats(SeatID) ON DELETE SET NULL 
 );
 
+CREATE SEQUENCE BookingNumberSeq 
+START WITH 1 
+INCREMENT BY 1;
+
+CREATE TRIGGER trg_InsertBookings
+ON Bookings
+INSTEAD OF INSERT
+AS
+BEGIN
+    INSERT INTO Bookings (BookingNumber, UserID, FlightID, BookingDate, Status, SeatID)
+    SELECT
+        'BK' + RIGHT('0000' + CAST(NEXT VALUE FOR BookingNumberSeq AS VARCHAR(4)), 4),
+        UserID,
+        FlightID,
+        BookingDate,
+        Status,
+        SeatID
+    FROM INSERTED;
+END;
 
 CREATE TABLE Payments (
     PaymentID INT IDENTITY PRIMARY KEY,
     BookingID INT FOREIGN KEY REFERENCES Bookings(BookingID) ON DELETE CASCADE,
-    Amount DECIMAL(10,2) NOT NULL,
+    Amount INT NOT NULL,
     PaymentStatus VARCHAR(50) CHECK (PaymentStatus IN ('Paid', 'Failed', 'Refunded')) NOT NULL,
     TransactionDate DATETIME DEFAULT GETDATE()
 );
+
 
 CREATE TABLE Refunds (
     RefundID INT IDENTITY PRIMARY KEY,
     BookingID INT FOREIGN KEY REFERENCES Bookings(BookingID) ON DELETE CASCADE,
     Reason VARCHAR(255) NOT NULL,
-    RefundAmount DECIMAL(10,2) NOT NULL,
+    RefundAmount INT NOT NULL,
     RefundStatus VARCHAR(50) CHECK (RefundStatus IN ('Processing', 'Completed', 'Rejected')) DEFAULT 'Processing',
     RequestedAt DATETIME DEFAULT GETDATE()
 );
+
+SELECT * FROM SEATS WHERE FlightID = 45;
 
 CREATE TABLE TravelHistory (
     HistoryID INT IDENTITY PRIMARY KEY,

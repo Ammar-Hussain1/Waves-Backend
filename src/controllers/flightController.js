@@ -158,6 +158,7 @@ export const searchFlight = async (req, res) => {
                         Outbound.DepartureTime AS OutboundDepartureTime,
                         Outbound.ArrivalTime AS OutboundArrivalTime,
                         (FC.SeatCount - FC.SeatBookedCount) AS AvailableOutboundSeats,
+                        FC.Price AS OutboundPrice,
                         A1.Country AS OutboundCountry,
                         A1.City AS OutboundCity,
                         A1.AirportName AS OutboundAirportName,
@@ -167,6 +168,7 @@ export const searchFlight = async (req, res) => {
                         ReturnFlight.DepartureTime AS ReturnDepartureTime,
                         ReturnFlight.ArrivalTime AS ReturnArrivalTime,
                         (FC1.SeatCount - FC1.SeatBookedCount) AS AvailableReturnFlightSeats,
+                        FC1.Price AS ReturnPrice,
                         A2.Country AS ArrivalCountry,
                         A2.City AS ArrivalCity,
                         A2.AirportName AS ArrivalAirportName,
@@ -283,6 +285,7 @@ export const searchCountryFlights = async (req, res) => {
                         A1.Country AS OutboundCountry,
                         A1.City AS OutboundCity,
                         A1.AirportName AS OutboundAirportName,
+                        FC.Price AS OutboundPrice,
 
                         
                         ReturnFlight.FlightID AS ReturnFlightID,
@@ -292,6 +295,7 @@ export const searchCountryFlights = async (req, res) => {
                         (FC1.SeatCount - FC1.SeatBookedCount) AS AvailableReturnFlightSeats,
                         A2.Country AS ArrivalCountry,
                         A2.City AS ArrivalCity,
+                        FC1.Price AS ReturnPrice,
                         A2.AirportName AS ArrivalAirportName,
 
                         (FC1.Price + FC.Price) AS Price
