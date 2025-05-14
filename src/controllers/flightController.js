@@ -1,36 +1,52 @@
-import { sql, poolPromise } from '../config/db.js';
-import dotenv from 'dotenv';
+import { sql, poolPromise } from "../config/db.js";
+import dotenv from "dotenv";
 dotenv.config();
 
 export const getAllFlights = async (req, res) => {
-    try {
-        const pool = await poolPromise;
-        const result = await pool.request().query("SELECT * FROM Flights");
-        res.json(result.recordset);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query("SELECT * FROM Flights");
+    res.json(result.recordset);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 export const createFlight = async (req, res) => {
-    try {
-        const { DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, EconomyPrice, BusinessClassPrice, FirstClassPrice } = req.body;
+  try {
+    const {
+      DepartureAirport,
+      ArrivalAirport,
+      DepartureTime,
+      ArrivalTime,
+      EconomyPrice,
+      BusinessClassPrice,
+      FirstClassPrice,
+    } = req.body;
 
-        if ( !DepartureAirport || !ArrivalAirport || !DepartureTime || !ArrivalTime || !EconomyPrice || !BusinessClassPrice || !FirstClassPrice) {
-            return res.status(400).json({ message: 'All fields are required.' });
-        }
+    if (
+      !DepartureAirport ||
+      !ArrivalAirport ||
+      !DepartureTime ||
+      !ArrivalTime ||
+      !EconomyPrice ||
+      !BusinessClassPrice ||
+      !FirstClassPrice
+    ) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
 
-        const pool = await poolPromise;
+    const pool = await poolPromise;
 
-        await pool.request()
-        .input('DepartureAirport', sql.INT, DepartureAirport) 
-        .input('ArrivalAirport', sql.INT, ArrivalAirport) 
-        .input('DepartureTime', sql.DateTime, DepartureTime) 
-        .input('ArrivalTime', sql.DateTime, ArrivalTime) 
-        .input('EconomyPrice', sql.Int, EconomyPrice)
-        .input('BusinessClassPrice', sql.Int, BusinessClassPrice)
-        .input('FirstClassPrice', sql.Int, FirstClassPrice)
-            .query(`
+    await pool
+      .request()
+      .input("DepartureAirport", sql.INT, DepartureAirport)
+      .input("ArrivalAirport", sql.INT, ArrivalAirport)
+      .input("DepartureTime", sql.DateTime, DepartureTime)
+      .input("ArrivalTime", sql.DateTime, ArrivalTime)
+      .input("EconomyPrice", sql.Int, EconomyPrice)
+      .input("BusinessClassPrice", sql.Int, BusinessClassPrice)
+      .input("FirstClassPrice", sql.Int, FirstClassPrice).query(`
                 BEGIN TRY
                     BEGIN TRANSACTION
                         INSERT INTO Flights (DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime)
@@ -57,35 +73,39 @@ export const createFlight = async (req, res) => {
                 END CATCH;
             `);
 
-        res.status(201).json({ message: 'Flight Created successfully.' });
-
-    } catch (err) {
-        console.error('Database error:', err);
-        res.status(500).json({ message: 'Internal server error.' });
-    }
+    res.status(201).json({ message: "Flight Created successfully." });
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ message: "Internal server error." });
+  }
 };
 
 //one-way round-trip
 export const searchFlight = async (req, res) => {
-    try {
-        const { flightType, fromAirport, toAirport, departureDate, returnDate, flightClassType } = req.body;
-        if(!flightType)
-        {
-            return res.status(400).json({message: 'All fields are required.'});
-        }
-        if(flightType == 'one-way')
-        {
-            if (!fromAirport || !toAirport || !departureDate || !flightClassType) {
-                return res.status(400).json({ message: 'All fields are required.' });
-            }
-            const pool = await poolPromise;
+  try {
+    const {
+      flightType,
+      fromAirport,
+      toAirport,
+      departureDate,
+      returnDate,
+      flightClassType,
+    } = req.body;
+    if (!flightType) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+    if (flightType == "one-way") {
+      if (!fromAirport || !toAirport || !departureDate || !flightClassType) {
+        return res.status(400).json({ message: "All fields are required." });
+      }
+      const pool = await poolPromise;
 
-            const result = await pool.request()
-                .input('DepartureAirport', sql.Int, fromAirport)
-                .input('ArrivalAirport', sql.Int, toAirport)
-                .input('DepartureTime', sql.DateTime, departureDate)
-                .input('flightClassType', sql.NVarChar, flightClassType)
-                .query(`
+      const result = await pool
+        .request()
+        .input("DepartureAirport", sql.Int, fromAirport)
+        .input("ArrivalAirport", sql.Int, toAirport)
+        .input("DepartureTime", sql.DateTime, departureDate)
+        .input("flightClassType", sql.NVarChar, flightClassType).query(`
                     DECLARE @PrevDate DATETIME, @AheadDate DATETIME;
 
                     SET @PrevDate = DATEADD(DAY, -10, @DepartureTime);
@@ -115,29 +135,33 @@ export const searchFlight = async (req, res) => {
                         AND FC.ClassName = @flightClassType 
                     ORDER BY F.DepartureTime;
                 `);
-    
-            res.status(200).json(result.recordset);
-        }
-        else if(flightType == 'round-trip')
-        {    
-            if (!fromAirport || !toAirport || !departureDate || !returnDate || !flightClassType) {
-                return res.status(400).json({ message: 'All fields are required.' });
-            }
-            const pool = await poolPromise;
 
-            console.log(fromAirport);
-            console.log(toAirport);
-            console.log(departureDate);
-            console.log(returnDate);
-            console.log(flightClassType);
+      res.status(200).json(result.recordset);
+    } else if (flightType == "round-trip") {
+      if (
+        !fromAirport ||
+        !toAirport ||
+        !departureDate ||
+        !returnDate ||
+        !flightClassType
+      ) {
+        return res.status(400).json({ message: "All fields are required." });
+      }
+      const pool = await poolPromise;
 
-            const result = await pool.request()
-                .input('DepartureAirport', sql.Int, fromAirport)
-                .input('ArrivalAirport', sql.Int, toAirport)
-                .input('DepartureTime', sql.DateTime, departureDate)
-                .input('flightClassType', sql.NVarChar, flightClassType)
-                .input('ReturnTime', sql.DateTime, returnDate)
-                .query(`
+      console.log(fromAirport);
+      console.log(toAirport);
+      console.log(departureDate);
+      console.log(returnDate);
+      console.log(flightClassType);
+
+      const result = await pool
+        .request()
+        .input("DepartureAirport", sql.Int, fromAirport)
+        .input("ArrivalAirport", sql.Int, toAirport)
+        .input("DepartureTime", sql.DateTime, departureDate)
+        .input("flightClassType", sql.NVarChar, flightClassType)
+        .input("ReturnTime", sql.DateTime, returnDate).query(`
                     DECLARE @PrevDate DATETIME, @AheadDate DATETIME, @PrevDateReturn DATETIME, @AheadDateReturn DATETIME;
 
                     SET @PrevDate = DATEADD(DAY, -10, @DepartureTime);
@@ -203,37 +227,32 @@ export const searchFlight = async (req, res) => {
                         AND (FC1.SeatCount - FC1.SeatBookedCount) > 0
                     ORDER BY Outbound.DepartureTime;
                     `);
-            res.status(200).json(result.recordset);
-        }
-        else
-        {
-            return res.status(400).json({message: 'Invalid Flight type'});
-        }
-    } catch (err) {
-        console.error('Database error:', err);
-        res.status(500).json({ message: 'Internal server error.' });
+      res.status(200).json(result.recordset);
+    } else {
+      return res.status(400).json({ message: "Invalid Flight type" });
     }
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ message: "Internal server error." });
+  }
 };
 
-
 export const searchCountryFlights = async (req, res) => {
-    try {
-        const { flightType, fromAirport, toAirport, flightClassType } = req.body;
-        if(!flightType)
-        {
-            return res.status(400).json({message: 'All fields are required.'});
-        }
-        if(flightType == 'one-way')
-        {
-            if (!fromAirport || !flightClassType || !toAirport) {
-                return res.status(400).json({ message: 'All fields are required.' });
-            }
-            const pool = await poolPromise;
-            const result = await pool.request()
-                .input('DepartureAirport', sql.Int, fromAirport)
-                .input('ArrivalAirport', sql.Int, toAirport)
-                .input('flightClassType', sql.NVarChar, flightClassType)
-                .query(`
+  try {
+    const { flightType, fromAirport, toAirport, flightClassType } = req.body;
+    if (!flightType) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+    if (flightType == "one-way") {
+      if (!fromAirport || !flightClassType || !toAirport) {
+        return res.status(400).json({ message: "All fields are required." });
+      }
+      const pool = await poolPromise;
+      const result = await pool
+        .request()
+        .input("DepartureAirport", sql.Int, fromAirport)
+        .input("ArrivalAirport", sql.Int, toAirport)
+        .input("flightClassType", sql.NVarChar, flightClassType).query(`
                     DECLARE @DepartureTime DATETIME;
                     SET @DepartureTime = GETDATE();
 
@@ -258,21 +277,19 @@ export const searchCountryFlights = async (req, res) => {
                     ORDER BY 
                         F.DepartureTime;
                 `);
-    
-            res.status(200).json(result.recordset);
-        }
-        else if(flightType == 'round-trip')
-        {    
-            if (!fromAirport || !flightClassType) {
-                return res.status(400).json({ message: 'All fields are required.' });
-            }
-            const pool = await poolPromise;
 
-            const result = await pool.request()
-                .input('DepartureAirport', sql.Int, fromAirport)
-                .input('ArrivalAirport', sql.Int, toAirport)
-                .input('flightClassType', sql.NVarChar, flightClassType)
-                .query(`
+      res.status(200).json(result.recordset);
+    } else if (flightType == "round-trip") {
+      if (!fromAirport || !flightClassType) {
+        return res.status(400).json({ message: "All fields are required." });
+      }
+      const pool = await poolPromise;
+
+      const result = await pool
+        .request()
+        .input("DepartureAirport", sql.Int, fromAirport)
+        .input("ArrivalAirport", sql.Int, toAirport)
+        .input("flightClassType", sql.NVarChar, flightClassType).query(`
                     DECLARE @DepartureTime DATETIME;
                     SET @DepartureTime = GETDATE();
 
@@ -329,56 +346,64 @@ export const searchCountryFlights = async (req, res) => {
                     ORDER BY 
                         Outbound.DepartureTime;
                     `);
-            res.status(200).json(result.recordset);
-        }
-        else
-        {
-            return res.status(400).json({message: 'Invalid Flight type'});
-        }
-    } catch (err) {
-        console.error('Database error:', err);
-        res.status(500).json({ message: 'Internal server error.' });
+      res.status(200).json(result.recordset);
+    } else {
+      return res.status(400).json({ message: "Invalid Flight type" });
     }
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ message: "Internal server error." });
+  }
 };
 
 export const trackFlight = async (req, res) => {
-    try {
-        const { flightNumber } = req.body;
-        if(!flightNumber)
-        {
-            return res.status(400).json({message : 'All fields are required.'});
-        }
-            const pool = await poolPromise;
-
-            const result = await pool.request()
-                .input('flightNumber', sql.NVarChar, flightNumber)
-                .query(`
-                    SELECT F.flightId, F.flightNumber, F.DepartureAirport, F.ArrivalAirport, F.DepartureTime, F.ArrivalTime, F.DelayedTime, F.DelayedStatus, F.Price, A1.Country AS 'DepartureCountry', A1.City AS 'DepartureCity', A1.AirportName AS 'DepartureAirportName', A2.Country AS 'ArrivalCountry', A2.City AS 'ArrivalCity', A2.AirportName AS 'ArrivalAirportName'  FROM Flights F INNER JOIN Airports A1 ON F.DepartureAirport = A1.AirportID INNER JOIN Airports A2 ON F.ArrivalAirport = A2.AirportID WHERE FlightNumber = @flightNumber;
-                `);
-    
-            res.status(200).json(result.recordset);
-    } catch (err) {
-        console.error('Database error:', err);
-        res.status(500).json({ message: 'Internal server error.' });
+  try {
+    const { flightNumber } = req.body;
+    if (!flightNumber) {
+      return res.status(400).json({ message: "All fields are required." });
     }
+    const pool = await poolPromise;
+
+    const result = await pool
+      .request()
+      .input("flightNumber", sql.NVarChar, flightNumber).query(`
+                    SELECT F.flightId, F.flightNumber, F.DepartureAirport, F.ArrivalAirport, 
+                    F.DepartureTime, F.ArrivalTime, F.DelayedTime, F.DelayedStatus, 
+                    A1.Country AS 'DepartureCountry', A1.City AS 'DepartureCity', A1.AirportName AS 'DepartureAirportName', 
+                    A2.Country AS 'ArrivalCountry', A2.City AS 'ArrivalCity', A2.AirportName AS 'ArrivalAirportName'  
+                    FROM Flights F 
+                    INNER JOIN Airports A1 
+                        ON F.DepartureAirport = A1.AirportID 
+                    INNER JOIN Airports A2 
+                        ON F.ArrivalAirport = A2.AirportID
+                    WHERE F.FlightNumber = @flightNumber;
+                `);
+
+    res.status(200).json(result.recordset);
+  } catch (err) {
+    console.error("Database error:", err);
+    res.status(500).json({ message: "Internal server error." });
+  }
 };
 
 export const addDelay = async (req, res) => {
-    try {
-        const { delayFlightNumber } = req.params;
-        const { delayAmount, unit } = req.body; // delayAmount is a number, unit is 'minutes' or 'hours'
-        if (!delayFlightNumber || !delayAmount || !unit) {
-            return res.status(400).json({ message: 'Flight ID, delay amount, and unit are required.' });
-        }
+  try {
+    const { delayFlightNumber } = req.params;
+    const { delayAmount, unit } = req.body; // delayAmount is a number, unit is 'minutes' or 'hours'
+    if (!delayFlightNumber || !delayAmount || !unit) {
+      return res
+        .status(400)
+        .json({ message: "Flight ID, delay amount, and unit are required." });
+    }
 
-        const pool = await poolPromise;
+    const pool = await poolPromise;
 
-        // SQL code to add delay to existing DepartureTime
-        const result = await pool.request()
-        .input('flightNumber', sql.NVarChar, delayFlightNumber)
-        .input('DelayAmount', sql.Int, delayAmount)
-        .input('Unit', sql.VarChar, unit)
-        .query(`
+    // SQL code to add delay to existing DepartureTime
+    const result = await pool
+      .request()
+      .input("flightNumber", sql.NVarChar, delayFlightNumber)
+      .input("DelayAmount", sql.Int, delayAmount)
+      .input("Unit", sql.VarChar, unit).query(`
             BEGIN TRY
             BEGIN TRANSACTION
 
@@ -411,15 +436,13 @@ export const addDelay = async (req, res) => {
             END CATCH;
         `);
 
-
-        if (result.rowsAffected[0] === 0) {
-            return res.status(404).json({ message: 'Failed to update status.' });
-        }
-
-        res.status(200).json({ message: 'Delayed status updated.' });
-
-    } catch (err) {
-        console.error('Error updating Delayed status:', err);
-        res.status(500).json({ message: 'Internal server error.' });
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({ message: "Failed to update status." });
     }
+
+    res.status(200).json({ message: "Delayed status updated." });
+  } catch (err) {
+    console.error("Error updating Delayed status:", err);
+    res.status(500).json({ message: "Internal server error." });
+  }
 };

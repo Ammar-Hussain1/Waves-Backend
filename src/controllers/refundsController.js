@@ -15,8 +15,15 @@ export const getAllRefunds = async (req, res) => {
 export const getAllProcessingRefunds = async (req, res) => {
     try {
         const pool = await poolPromise;
-        const result = await pool.request().query("SELECT * FROM Refunds WHERE RefundStatus = 'Processing'");
-        res.json(result.recordset);
+        const result = await pool.request().query(`SELECT R.RefundID, R.Reason, U.FullName AS UserName, F.FlightNumber FROM Refunds R 
+            INNER JOIN Bookings B 
+                ON B.BookingID = R.BookingID 
+            INNER JOIN Users U ON
+                U.UserID = B.UserID
+            INNER JOIN Flights F ON
+                F.FlightID = B.FlightID 
+            WHERE RefundStatus = 'Processing'`);
+        res.status(200).json(result.recordset);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -25,8 +32,15 @@ export const getAllProcessingRefunds = async (req, res) => {
 export const getAllRejectedRefunds = async (req, res) => {
     try {
         const pool = await poolPromise;
-        const result = await pool.request().query("SELECT * FROM Refunds WHERE RefundStatus = 'Rejected'");
-        res.json(result.recordset);
+        const result = await pool.request().query(`SELECT R.RefundID, R.Reason, U.FullName AS UserName, F.FlightNumber FROM Refunds R 
+            INNER JOIN Bookings B 
+                ON B.BookingID = R.BookingID 
+            INNER JOIN Users U ON
+                U.UserID = B.UserID
+            INNER JOIN Flights F ON
+                F.FlightID = B.FlightID 
+            WHERE RefundStatus = 'Rejected'`);
+        res.status(200).json(result.recordset);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -35,8 +49,15 @@ export const getAllRejectedRefunds = async (req, res) => {
 export const getAllCompletedRefunds = async (req, res) => {
     try {
         const pool = await poolPromise;
-        const result = await pool.request().query("SELECT * FROM Refunds WHERE RefundStatus = 'Completed'");
-        res.json(result.recordset);
+        const result = await pool.request().query(`SELECT R.RefundID, R.Reason, U.FullName AS UserName, F.FlightNumber FROM Refunds R 
+            INNER JOIN Bookings B 
+                ON B.BookingID = R.BookingID 
+            INNER JOIN Users U ON
+                U.UserID = B.UserID
+            INNER JOIN Flights F ON
+                F.FlightID = B.FlightID 
+            WHERE RefundStatus = 'Completed'`);
+        res.status(200).json(result.recordset);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
