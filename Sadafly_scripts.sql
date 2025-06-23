@@ -3,8 +3,6 @@ DROP DATABASE SadaflyDB;
 CREATE DATABASE SadaflyDB;
 USE SadaflyDB;
 
-SELECT * FROM Userinfo;
-
 CREATE TABLE Users (
     UserID INT PRIMARY KEY IDENTITY(1,1),
     PasswordHash VARCHAR(255) NOT NULL,
@@ -13,7 +11,7 @@ CREATE TABLE Users (
     UserType VARCHAR(50) CHECK (UserType IN ('Customer', 'Admin')) NOT NULL,
     CreatedAt DATETIME DEFAULT GETDATE()
 );
-
+SELECT * FROM FLIGHTS;
 CREATE TABLE UserAddress(
     AddressID INT PRIMARY KEY IDENTITY(1,1),
 	HouseNumber INT NOT NULL,
@@ -63,7 +61,7 @@ CREATE TABLE Flights (
 );
 
 CREATE SEQUENCE FlightNumberSeq 
-START WITH 20 
+START WITH 1
 INCREMENT BY 1;
 
 CREATE TRIGGER trg_InsertFlights
@@ -150,7 +148,7 @@ CREATE TABLE Refunds (
     RequestedAt DATETIME DEFAULT GETDATE()
 );
 
-SELECT * FROM SEATS WHERE FlightID = 45;
+SELECT * FROM Refunds;
 
 CREATE TABLE TravelHistory (
     HistoryID INT IDENTITY PRIMARY KEY,
@@ -213,102 +211,7 @@ BEGIN
     DEALLOCATE class_cursor;
 END;
 
--- USERS
-INSERT INTO Users (PasswordHash, FullName, Email, UserType)
-VALUES 
-('hashed_pw_1', 'Alice Johnson', 'alice@example.com', 'Customer'),
-('hashed_pw_2', 'Bob Smith', 'bob@example.com', 'Customer'),
-('hashed_pw_3', 'Charlie Lee', 'charlie@example.com', 'Admin'),
-('hashed_pw_4', 'Diana Prince', 'diana@example.com', 'Customer'),
-('hashed_pw_5', 'Ethan Hunt', 'ethan@example.com', 'Customer');
 
--- USERADDRESS
-INSERT INTO UserAddress (HouseNoAndStreet, StateA, City, Country, POSTALCODE)
-VALUES 
-('101 Main St', 'California', 'Los Angeles', 'USA', 90001),
-('202 Elm St', 'Texas', 'Dallas', 'USA', 75001),
-('303 Pine St', 'Ontario', 'Toronto', 'Canada', 10001),
-('404 Maple Ave', 'Victoria', 'Melbourne', 'Australia', 3000),
-('505 Oak Dr', 'Sindh', 'Karachi', 'Pakistan', 74200);
-
--- USERINFO
-INSERT INTO UserInfo (UserID, PrimaryContact, SecondaryContact, UAddress)
-VALUES 
-(1, '1111111111', '2222222222', 1),
-(2, '3333333333', NULL, 2),
-(3, '4444444444', '5555555555', 3),
-(4, '6666666666', NULL, 4),
-(5, '7777777777', '8888888888', 5);
-
---UserContact
-INSERT INTO UserContact (UName, Email, Phone, UMessage)
-VALUES ('Ammar', 'ammar@gmail.com', '03123456789', 'Hi I would like to meet you for business opportunities');
-
--- FLIGHTS
-INSERT INTO Flights (FlightNumber, DepartureAirport, ArrivalAirport, DepartureTime, ArrivalTime, DelayedTime, DelayedStatus, Price)
-VALUES 
-('FL001', 1, 2, '2025-06-10 08:00', '2025-06-10 12:00', NULL, 0, 200.00),
-('FL002', 2, 1, '2025-06-11 14:00', '2025-06-11 18:00', NULL, 0, 220.00),
-('FL003', 1, 2, '2025-06-12 09:00', '2025-06-12 13:00', NULL, 0, 240.00),
-('FL004', 2, 1, '2025-06-13 15:00', '2025-06-13 19:00', NULL, 0, 260.00),
-('FL005', 1, 2, '2025-06-14 10:00', '2025-06-14 14:00', NULL, 0, 280.00);
-
--- FLIGHTCLASSES
-INSERT INTO FlightClasses (ClassName, FlightID)
-VALUES 
-('Economy', 1),
-('Business', 2),
-('First Class', 3),
-('Economy', 4),
-('Business', 5);
-
--- SEATS
-INSERT INTO Seats (FlightID, SeatNumber, SeatClass, IsBooked)
-VALUES 
-(1, '1A', 1, 0),
-(2, '2B', 2, 1),
-(3, '3C', 3, 0),
-(4, '4D', 4, 0),
-(5, '5E', 5, 1);
-
--- BOOKINGS
-INSERT INTO Bookings (UserID, FlightID, Status, SeatID)
-VALUES 
-(1, 1, 'Confirmed', 1),
-(2, 2, 'Pending', 2),
-(3, 3, 'Cancelled', 3),
-(4, 4, 'Confirmed', 4),
-(5, 5, 'Confirmed', 5);
-
--- PAYMENTS
-INSERT INTO Payments (BookingID, Amount, PaymentStatus)
-VALUES 
-(1, 200.00, 'Paid'),
-(2, 220.00, 'Paid'),
-(3, 240.00, 'Refunded'),
-(4, 260.00, 'Paid'),
-(5, 280.00, 'Paid');
-
--- REFUNDS
-INSERT INTO Refunds (BookingID, Reason, RefundAmount, RefundStatus)
-VALUES 
-(3, 'Flight Cancelled by Airline', 240.00, 'Completed'),
-(2, 'Customer Request', 220.00, 'Processing'),
-(1, 'Double Booking', 200.00, 'Rejected'),
-(4, 'Overbooking', 260.00, 'Completed'),
-(5, 'Late Departure', 100.00, 'Processing');
-
-INSERT INTO Refunds (BookingID, Reason, RefundAmount, RefundStatus)
-VALUES (5, 'Late Departure', 100.00, 'Processing');
-
--- TRAVELHISTORY
-INSERT INTO TravelHistory (UserID, BookingID, TravelDate)
-VALUES 
-(1, 1, '2025-06-10'),
-(2, 2, '2025-06-11'),
-(3, 3, '2025-06-12'),
-(4, 4, '2025-06-13'),
-(5, 5, '2025-06-14');
 
 -- Airpots Data
 
@@ -410,6 +313,26 @@ INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES (
 
 -- Canada
 INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Toronto Pearson International Airport', 'Toronto', 'YYZ', 'CYYZ');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Vancouver International Airport', 'Vancouver', 'YVR', 'CYVR');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Montréal–Trudeau International Airport', 'Montreal', 'YUL', 'CYUL');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Calgary International Airport', 'Calgary', 'YYC', 'CYYC');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Edmonton International Airport', 'Edmonton', 'YEG', 'CYEG');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Ottawa Macdonald–Cartier International Airport', 'Ottawa', 'YOW', 'CYOW');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Winnipeg James Armstrong Richardson International Airport', 'Winnipeg', 'YWG', 'CYWG');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Halifax Stanfield International Airport', 'Halifax', 'YHZ', 'CYHZ');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Québec City Jean Lesage International Airport', 'Quebec City', 'YQB', 'CYQB');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'St. John’s International Airport', 'St. John’s', 'YYT', 'CYYT');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Billy Bishop Toronto City Airport', 'Toronto', 'YTZ', 'CYTZ');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Abbotsford International Airport', 'Abbotsford', 'YXX', 'CYXX');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Kelowna International Airport', 'Kelowna', 'YLW', 'CYLW');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Victoria International Airport', 'Victoria', 'YYJ', 'CYYJ');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Saskatoon John G. Diefenbaker International Airport', 'Saskatoon', 'YXE', 'CYXE');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Regina International Airport', 'Regina', 'YQR', 'CYQR');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Thunder Bay International Airport', 'Thunder Bay', 'YQT', 'CYQT');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Charlottetown Airport', 'Charlottetown', 'YYG', 'CYYG');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Whitehorse Erik Nielsen International Airport', 'Whitehorse', 'YXY', 'CYXY');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Canada', 'Yellowknife Airport', 'Yellowknife', 'YZF', 'CYZF');
+
 
 -- Central African Republic
 INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Central African Republic', 'Bangui M’Poko International Airport', 'Bangui', 'BGF', 'FEFF');
@@ -687,6 +610,47 @@ INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES (
 -- Pakistan
 INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Allama Iqbal International Airport', 'Lahore', 'LHE', 'OPLA');
 
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Islamabad International Airport', 'Islamabad', 'ISB', 'OPIS');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Jinnah International Airport', 'Karachi', 'KHI', 'OPKC');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Faisalabad International Airport', 'Faisalabad', 'LYP', 'OPFA');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Multan International Airport', 'Multan', 'MUX', 'OPMT');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Peshawar Bacha Khan International Airport', 'Peshawar', 'PEW', 'OPPS');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Quetta International Airport', 'Quetta', 'UET', 'OPQT');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Sialkot International Airport', 'Sialkot', 'SKT', 'OPST');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Skardu International Airport', 'Skardu', 'KDU', 'OPSD');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Gilgit Airport', 'Gilgit', 'GIL', 'OPGT');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Chitral Airport', 'Chitral', 'CJL', 'OPCH');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Gwadar International Airport', 'Gwadar', 'GWD', 'OPGD');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Turbat International Airport', 'Turbat', 'TUK', 'OPTU');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Sukkur Airport', 'Sukkur', 'SKZ', 'OPSK');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Shaikh Zayed International Airport', 'Rahim Yar Khan', 'RYK', 'OPRK');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Bahawalpur Airport', 'Bahawalpur', 'BHV', 'OPBW');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Nawabshah Airport', 'Nawabshah', 'WNS', 'OPNH');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Moenjodaro Airport', 'Mohenjo-daro', 'MJD', 'OPMJ');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Dalbandin Airport', 'Dalbandin', 'DBA', 'OPDB');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Dera Ghazi Khan International Airport', 'Dera Ghazi Khan', 'DEA', 'OPDG');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Dera Ismail Khan Airport', 'Dera Ismail Khan', 'DSK', 'OPDI');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Parachinar Airport', 'Parachinar', 'PAJ', 'OPPC');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Pasni Airport', 'Pasni City', 'PSI', 'OPPI');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Panjgur Airport', 'Panjgur', 'PJG', 'OPPG');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Ormara Airport', 'Ormara', 'ORW', 'OPOR');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Jiwani Airport', 'Jiwani', 'JIW', 'OPJI');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Khuzdar Airport', 'Khuzdar', 'KDD', 'OPKH');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Saidu Sharif Airport', 'Saidu Sharif', 'SDT', 'OPSS');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Zhob Airport', 'Zhob', 'PZH', 'OPZB');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Sibi Airport', 'Sibi', 'SBQ', 'OPSB');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Sindhri Airport', 'Sindhri', 'MPD', 'OPMP');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Muzaffarabad Airport', 'Muzaffarabad', 'MFG', 'OPMF');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Rawalakot Airport', 'Rawalakot', 'RAZ', 'OPRT');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Abbottabad Airport', 'Abbottabad', 'AAW', 'OPAB');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Bannu Airport', 'Bannu', 'BNP', 'OPBN');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Chilas Airport', 'Chilas', 'CHB', 'OPCL');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Hyderabad Airport', 'Hyderabad', 'HDD', 'OPKD');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Mangla Airport', 'Mangla', 'XJM', 'OPMA');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Sehwan Sharif Airport', 'Sehwan Sharif', 'SYW', 'OPSN');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Sui Airport', 'Sui', 'SUL', 'OPSU');
+INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Pakistan', 'Tarbela Dam Airport', 'Tarbela Dam', 'TLB', 'OPTA');
+
 -- Palau
 INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Palau', 'Babeldaob Palau International Airport', 'Melekeok', 'ROR', 'PTRO');
 
@@ -875,5 +839,3 @@ INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES (
 
 -- Zimbabwe
 INSERT INTO Airports (Country, AirportName, City, IATA_Code, ICAO_Code) VALUES ('Zimbabwe', 'Harare International Airport', 'Harare', 'HRE', 'FVHA');
-
-SELECT * FROM airports;
